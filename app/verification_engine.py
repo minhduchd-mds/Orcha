@@ -16,10 +16,11 @@ PY_COMPILE = [
     'app/kimik3_lite.py', 'app/context_engine.py', 'app/workflow_engine.py',
     'app/studio_server.py', 'app/studio_server_v64.py', 'app/studio_server_v65.py',
     'app/studio_server_v66.py', 'app/studio_server_v67.py', 'app/studio_server_v68.py',
-    'app/studio_server_v69.py', 'app/harness_runtime.py', 'app/verification_engine.py',
-    'app/hermes_runtime.py', 'app/agent_runtime.py', 'app/mcp_gateway.py',
-    'app/permission_engine.py', 'app/model_registry.py', 'app/parallel_agent.py',
-    'app/agent_team.py', 'app/self_improvement.py', 'app/maintenance.py',
+    'app/studio_server_v69.py', 'app/studio_server_v70.py', 'app/harness_runtime.py',
+    'app/verification_engine.py', 'app/hermes_runtime.py', 'app/agent_runtime.py',
+    'app/mcp_gateway.py', 'app/permission_engine.py', 'app/model_registry.py',
+    'app/parallel_agent.py', 'app/agent_team.py', 'app/self_improvement.py',
+    'app/maintenance.py',
 ]
 SELF_TESTS = [
     'app/harness_runtime.py', 'app/model_registry.py', 'app/hermes_runtime.py',
@@ -64,7 +65,7 @@ def recipes(root: str | Path = ROOT) -> list[dict]:
     py = [x for x in PY_COMPILE if (root / x).exists()]
     if py:
         rows.append({'id': 'python-compile', 'label': 'Python compile', 'argv': [sys.executable, '-m', 'py_compile', *py]})
-    for i, path in enumerate(SELF_TESTS):
+    for path in SELF_TESTS:
         if (root / path).exists():
             rows.append({'id': 'self-' + Path(path).stem, 'label': 'Self test ' + Path(path).stem, 'argv': [sys.executable, path]})
     node = shutil.which('node')
