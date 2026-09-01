@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "id": "max",
+      "name": "KimiK3 MAX",
+      "ollama_tag": "gemma3:270m-it-qat",
+      "size_mb": 241,
+      "min_ram_gb": 3,
+      "native_context": 32768,
+      "modalities": ["text"],
+      "capabilities": {"chat": 55, "vietnamese": 48, "code": 40, "reasoning": 38, "tools": 35, "vision": 0},
+      "roles": ["fast", "fallback"],
+      "builtin": true
+    },
+    {
+      "id": "balanced",
+      "name": "KimiK3 Balanced",
+      "ollama_tag": "qwen3:0.6b-q4_K_M",
+      "size_mb": 522,
+      "min_ram_gb": 4,
+      "native_context": 40960,
+      "modalities": ["text"],
+      "capabilities": {"chat": 72, "vietnamese": 74, "code": 66, "reasoning": 64, "tools": 64, "vision": 0},
+      "roles": ["default", "chat", "rag", "tools"],
+      "builtin": true
+    },
+    {
+      "id": "quality",
+      "name": "KimiK3 Quality",
+      "ollama_tag": "qwen3:1.7b",
+      "size_mb": 1400,
+      "min_ram_gb": 6,
+      "native_context": 40960,
+      "modalities": ["text"],
+      "capabilities": {"chat": 82, "vietnamese": 82, "code": 78, "reasoning": 78, "tools": 74, "vision": 0},
+      "roles": ["deep", "code", "planning"],
+      "builtin": true
+    },
+    {
+      "id": "uiux-vision-lite",
+      "name": "UI/UX Vision Lite",
+      "ollama_tag": "moondream:1.8b-v2-q2_K",
+      "companion_model": "balanced",
+      "size_mb": 1500,
+      "min_ram_gb": 4,
+      "native_context": 2048,
+      "modalities": ["text", "image"],
+      "capabilities": {"chat": 58, "vietnamese": 45, "code": 28, "reasoning": 44, "tools": 40, "vision": 82, "uiux": 86},
+      "roles": ["uiux", "vision", "screenshot", "layout"],
+      "description": "Vision-first profile for UI screenshots. Visual observations are handed to the Balanced companion for Vietnamese UX reasoning.",
+      "builtin": true,
+      "composite": true
+    }
+  ]
+}

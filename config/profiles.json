@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "virtual_context_default": 1000000,
   "max": {
     "base": "gemma3:270m-it-qat",
@@ -27,5 +27,17 @@
     "native_context": 40960,
     "virtual_context": 1000000,
     "recommended_mode": "deep"
+  },
+  "uiux": {
+    "base": "moondream:1.8b-v2-q2_K",
+    "ollama_name": "moondream:1.8b-v2-q2_K",
+    "companion_profile": "balanced",
+    "published_model_size": "~1.5 GB",
+    "working_context": 2048,
+    "native_context": 2048,
+    "virtual_context": 1000000,
+    "recommended_mode": "smart",
+    "modalities": ["text", "image"],
+    "role": "uiux-vision"
   }
 }

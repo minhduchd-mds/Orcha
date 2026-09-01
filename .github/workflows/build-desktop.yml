@@ -22,8 +22,10 @@ jobs:
       - name: Verify Windows source
         shell: pwsh
         run: |
-          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python app/kimik3_lite.py --self-test
+          python app/model_registry.py
+          python app/model_benchmark.py
           python app/skill_runtime.py
           python app/skill_builder.py
           python app/workflow_engine.py
@@ -34,7 +36,10 @@ jobs:
           python app/action_log.py
           python app/benchmark_engine.py
           node --check studio/app.js
-          python -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'skillLibrary' in p and 'workflowCanvas' in p and 'Kỹ năng của tôi' in p;print('PASS: Batch5 Studio DOM contract')"
+          node --check studio/model-manager.js
+          python -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'skillLibrary' in p and 'workflowCanvas' in p and 'modelLibrary' in p and 'modelMode' in p;print('PASS: v6.4 Studio DOM contract')"
+          python -c "import sys;sys.path.insert(0,'app');import model_registry as m;assert m.get('uiux-vision-lite');assert m.classify_task('review UI/UX screenshot')=='uiux';assert m.route('review code').get('selected');print('PASS: Model Registry + Auto Router')"
+          python -c "import sys;sys.path.insert(0,'app');import model_benchmark as b;r=b.compare(['max','balanced','uiux-vision-lite']);assert len(r['models'])==3;print('PASS: Model comparison contract')"
           python -c "import sys;sys.path.insert(0,'app');import skill_builder as s;assert callable(s.list_all) and callable(s.duplicate) and callable(s.delete) and callable(s.versions);print('PASS: Skill CRUD API contract')"
           python -c "import sys;sys.path.insert(0,'app');import workflow_engine as w;assert callable(w.reorder) and callable(w.duplicate_workflow);print('PASS: Workflow builder API contract')"
           python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: Computer MCP element handshake')"
@@ -61,8 +66,10 @@ jobs:
           python-version: '3.12'
       - name: Verify macOS source
         run: |
-          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python3 app/kimik3_lite.py --self-test
+          python3 app/model_registry.py
+          python3 app/model_benchmark.py
           python3 app/skill_runtime.py
           python3 app/skill_builder.py
           python3 app/workflow_engine.py
@@ -73,7 +80,9 @@ jobs:
           python3 app/action_log.py
           python3 app/benchmark_engine.py
           node --check studio/app.js
-          python3 -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'skillLibrary' in p and 'workflowCanvas' in p;print('PASS: Batch5 Studio DOM contract')"
+          node --check studio/model-manager.js
+          python3 -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'modelLibrary' in p and 'UI/UX Specialist' in p;print('PASS: v6.4 Model Manager DOM contract')"
+          python3 -c "import sys;sys.path.insert(0,'app');import model_registry as m;assert m.get('uiux-vision-lite') and m.route('UI/UX screenshot',True).get('selected');print('PASS: Model Registry + UIUX route')"
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
