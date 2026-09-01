@@ -1,5 +1,18 @@
 # Changelog
 
+## v6.7.0 — Agent Team + Dependency Graph
+
+- Thêm `agent_team.py` để điều phối đội agent theo DAG thay vì chỉ chạy sub-agent độc lập.
+- Task graph mặc định: Research + Specialist → Critic + Verifier → Synthesis.
+- Các node độc lập chạy song song theo RAM Guard; node phụ thuộc chỉ chạy khi dependency hoàn tất.
+- Shared Team Memory truyền output agent trước cho agent sau mà không ghi vào global memory.
+- Conflict Resolver phát hiện bất đồng cơ bản và ưu tiên Verifier + evidence khi tổng hợp.
+- Budget Manager giới hạn worker, token/agent và tổng team budget theo capacity máy.
+- Dependency failure làm downstream node chuyển `blocked` thay vì chạy với context lỗi.
+- Giữ policy `parallel-read-serial-write`: mọi write/Figma/Computer/AutoCAD vẫn đi lane tuần tự + Permission Gate.
+- Thêm API `/api/agents/team/capacity`, `/plan`, `/run`, `/runs/<id>`.
+- Studio có nút `Đội agent`, Task Graph và trạng thái từng node trong Inspector; Windows/macOS launcher dùng server v6.7.
+
 ## v6.6.0 — Parallel Agent Orchestrator
 
 - Thêm `parallel_agent.py` với RAM-aware concurrency; máy 4 GB mặc định tối đa 2 worker song song.
