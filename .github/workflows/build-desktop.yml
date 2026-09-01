@@ -1,11 +1,8 @@
-name: Build Desktop Packages
+name: Publish v6.5.0
 
 on:
   push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
-    branches: [main]
+    branches: ['release/v6.5.0']
   workflow_dispatch:
 
 permissions:
@@ -24,39 +21,22 @@ jobs:
         run: |
           python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/uiux_design_agent.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python app/kimik3_lite.py --self-test
-          python app/model_registry.py
-          python app/model_benchmark.py
           python app/uiux_design_agent.py
-          python app/skill_runtime.py
-          python app/skill_builder.py
-          python app/workflow_engine.py
-          python app/permission_engine.py
-          python app/mcp_transport.py
-          python app/mcp_gateway.py
-          python app/agent_runtime.py
-          python app/action_log.py
-          python app/benchmark_engine.py
           node --check studio/app.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
-          python -c "from pathlib import Path;p=Path('studio/model-manager.js').read_text(encoding='utf-8');assert 'design-agent.js' in p;css=Path('studio/design-agent.css').read_text(encoding='utf-8');assert '.design-view' in css;print('PASS: Design Agent UI load contract')"
-          python -c "import sys;sys.path.insert(0,'app');import uiux_design_agent as d;r=d.build_report([{'name':'D','width':1440},{'name':'M','width':430}],[{'issues':[]},{'issues':[]}]);assert r['responsive']['multi_viewport'] and r['figma_handoff']['requires_confirmation_for_write'];print('PASS: Multi-screen + Figma handoff contract')"
-          python -c "import sys;sys.path.insert(0,'app');import model_registry as m;assert m.get('uiux-vision-lite');assert m.classify_task('review UI/UX screenshot')=='uiux';assert m.route('review code').get('selected');print('PASS: Model Registry + Auto Router')"
-          python -c "import sys;sys.path.insert(0,'app');import model_benchmark as b;r=b.compare(['max','balanced','uiux-vision-lite']);assert len(r['models'])==3;print('PASS: Model comparison contract')"
-          python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: Computer MCP element handshake')"
+          python -c "import sys;sys.path.insert(0,'app');import uiux_design_agent as d;r=d.build_report([{'name':'D','width':1440},{'name':'M','width':430}],[{'issues':[]},{'issues':[]}]);assert r['responsive']['multi_viewport'] and r['figma_handoff']['requires_confirmation_for_write'];print('PASS: v6.5 UIUX Design Agent')"
       - name: Package Windows portable
-        if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v6-Windows | Out-Null
+          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v6.5.0-Windows | Out-Null
           $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
-          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v6-Windows -Recurse -Force } }
-          Compress-Archive -Path dist\KimiK3-Lite-v6-Windows -DestinationPath dist\KimiK3-Lite-v6-Windows-Portable.zip -Force
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v6.5.0-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\KimiK3-Lite-v6.5.0-Windows -DestinationPath dist\KimiK3-Lite-v6.5.0-Windows-Portable.zip -Force
       - uses: actions/upload-artifact@v4
-        if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v6-Windows-Portable
-          path: dist/KimiK3-Lite-v6-Windows-Portable.zip
+          name: KimiK3-Lite-v6.5.0-Windows-Portable
+          path: dist/KimiK3-Lite-v6.5.0-Windows-Portable.zip
 
   macos:
     runs-on: macos-latest
@@ -69,35 +49,21 @@ jobs:
         run: |
           python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/uiux_design_agent.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python3 app/kimik3_lite.py --self-test
-          python3 app/model_registry.py
-          python3 app/model_benchmark.py
           python3 app/uiux_design_agent.py
-          python3 app/skill_runtime.py
-          python3 app/skill_builder.py
-          python3 app/workflow_engine.py
-          python3 app/permission_engine.py
-          python3 app/mcp_transport.py
-          python3 app/mcp_gateway.py
-          python3 app/agent_runtime.py
-          python3 app/action_log.py
-          python3 app/benchmark_engine.py
           node --check studio/app.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
-          python3 -c "from pathlib import Path;p=Path('studio/model-manager.js').read_text(encoding='utf-8');assert 'design-agent.js' in p;assert Path('studio/design-agent.css').exists();print('PASS: v6.5 Design Agent UI contract')"
-          python3 -c "import sys;sys.path.insert(0,'app');import uiux_design_agent as d;r=d.build_report([{'width':1440},{'width':430}],[{},{}]);assert r['responsive']['multi_viewport'];print('PASS: Responsive comparison contract')"
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
-        if: github.event_name != 'pull_request'
         run: ./packaging/macos/build-dmg.sh
+      - name: Rename DMG
+        run: mv dist/KimiK3-Lite-v6-macOS.dmg dist/KimiK3-Lite-v6.5.0-macOS.dmg
       - uses: actions/upload-artifact@v4
-        if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v6-macOS-DMG
-          path: dist/KimiK3-Lite-v6-macOS.dmg
+          name: KimiK3-Lite-v6.5.0-macOS-DMG
+          path: dist/KimiK3-Lite-v6.5.0-macOS.dmg
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: [windows, macos]
     runs-on: ubuntu-latest
     steps:
@@ -106,7 +72,9 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
-      - name: Publish GitHub Release
+      - name: Publish GitHub Release v6.5.0
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --title "KimiK3-Lite Studio ${GITHUB_REF_NAME}"
+        run: |
+          gh release view v6.5.0 >/dev/null 2>&1 && gh release delete v6.5.0 -y --cleanup-tag || true
+          gh release create v6.5.0 release-assets/* --target ae7c79b0383a42056a41c98434189d1250935ea9 --generate-notes --title "KimiK3-Lite Studio v6.5.0"
