@@ -1,5 +1,18 @@
 # Changelog
 
+## v6.9.0 — Hermes Foundation + Chat Reliability
+
+- Thêm `hermes_runtime.py` — control plane local lấy cảm hứng kiến trúc từ NousResearch Hermes Agent `v2026.8.31`, triển khai lại độc lập cho runtime ít RAM.
+- Conversation-first router: câu hỏi thông tin đi direct chat; matched skill hoặc yêu cầu có side effect mới vào Agent Executor.
+- Thêm durable Hermes transcript theo session + `request_id` idempotency để tránh append/trả response trùng khi client retry.
+- Thêm local agent roster General / Research / Builder / Verifier và peer-message bus local-only.
+- Thêm steer/cancel control registry để làm nền cho điều khiển sub-agent/team khi đang chạy.
+- Thêm protected-instruction path policy cho AGENTS.md, skills, memory và Hermes config; Permission Engine hiện tại vẫn là authority chính cho write tools.
+- Sửa lỗi text-only khi người dùng đang chọn `UI/UX Vision Lite`: composite vision profile tự dùng companion Balanced thay vì gửi text vào Moondream.
+- Mở rộng classifier nhận biết `thiết kế/design` là UI/UX intent và giữ metadata model đã chọn + runtime model thực tế.
+- Studio có Hermes status nhỏ trong Inspector; client tự gắn `request_id` cho `/api/chat`.
+- Windows/macOS launcher kiểm tra đúng runtime 6.9, tự shutdown server cũ chiếm port rồi chạy `studio_server_v69.py`; CI thêm regression cho Hermes + composite route + launcher/package.
+
 ## v6.8.0 — Final Intelligence & Hardening
 
 - Thêm `self_improvement.py`: lưu outcome, lesson local và performance score theo chiến lược `single / parallel / team`.

@@ -12,11 +12,9 @@ ID=re.compile(r'^[a-z0-9][a-z0-9._-]{1,63}$')
 def _load(path:Path)->dict:
     try:return json.loads(path.read_text(encoding='utf-8'))
     except Exception:return {'version':1,'models':[]}
-
 def _save(path:Path,obj:dict):
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(obj,ensure_ascii=False,indent=2),encoding='utf-8')
-
 def total_ram_gb()->float:
     try:
         if os.name=='nt':
@@ -62,7 +60,7 @@ def delete_model(mid:str)->bool:
 
 def classify_task(text:str,has_image:bool=False)->str:
     t=(text or '').lower()
-    if has_image or any(k in t for k in ['ui/ux','giao diện','screenshot','layout','figma','wireframe','màn hình']):return 'uiux'
+    if has_image or any(k in t for k in ['ui/ux','giao diện','screenshot','layout','figma','wireframe','màn hình','thiết kế','design']):return 'uiux'
     if any(k in t for k in ['code','bug','refactor','typescript','python','review mã','kiến trúc']):return 'code'
     if any(k in t for k in ['lập kế hoạch','phân tích sâu','reason','workflow','agent']):return 'reasoning'
     return 'chat'
@@ -83,7 +81,24 @@ def route(text:str,has_image:bool=False,preferred:str='auto')->dict:
     chosen=max(candidates,key=score) if candidates else None
     return {'task':task,'selected':chosen,'reason':'capability+ram','system_ram_gb':ram,'candidates':[{'id':m.get('id'),'score':score(m)} for m in candidates]}
 
+def runtime_model(selected:dict|None,has_image:bool=False)->dict:
+    """Resolve the actual Ollama model used for a request.
+
+    Composite vision profiles are not suitable as plain text chat models. When no image is
+    attached, use their declared companion model and keep the selected composite profile in
+    route metadata so the UI can still show the user's choice.
+    """
+    selected=dict(selected or {})
+    if selected.get('composite') and not has_image:
+        companion=get(str(selected.get('companion_model') or 'balanced')) or get('balanced')
+        if companion:
+            return {'model':str(companion.get('ollama_tag') or ''),'selected':companion,'reason':'composite-text-companion','composite':selected}
+    return {'model':str(selected.get('ollama_tag') or ''),'selected':selected,'reason':'selected-model','composite':None}
+
 def self_test():
-    assert get('balanced');assert classify_task('đánh giá UI/UX screenshot')=='uiux';r=route('review code');assert r.get('selected');print('PASS: model registry/router')
+    assert get('balanced');assert classify_task('đánh giá UI/UX screenshot')=='uiux';assert classify_task('tìm hiểu thiết kế Apple')=='uiux';r=route('review code');assert r.get('selected')
+    ui=get('uiux-vision-lite');x=runtime_model(ui,False);assert x.get('selected',{}).get('id')=='balanced' and x.get('reason')=='composite-text-companion'
+    y=runtime_model(ui,True);assert y.get('selected',{}).get('id')=='uiux-vision-lite'
+    print('PASS: model registry/router + composite text companion')
 
 if __name__=='__main__':self_test()
