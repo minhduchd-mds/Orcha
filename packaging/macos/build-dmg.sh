@@ -22,8 +22,18 @@ export KIMIK3_DATA_DIR="${KIMIK3_DATA_DIR:-$HOME/Library/Application Support/Kim
 mkdir -p "$KIMIK3_DATA_DIR" "$HOME/Library/Logs"
 if ! command -v python3 >/dev/null 2>&1; then osascript -e 'display alert "KimiK3-Lite Studio" message "Chưa có Python 3. Hãy cài Python 3.10+ trước." as critical' || true; open "https://www.python.org/downloads/macos/" || true; exit 1; fi
 if ! curl -fsS "http://127.0.0.1:11434/api/tags" >/dev/null 2>&1 && [ -d "/Applications/Ollama.app" ]; then open -gja "Ollama" || true; sleep 1; fi
-if ! curl -fsS "${URL}health" >/dev/null 2>&1; then nohup python3 "$ROOT/app/studio_server_v68.py" --host 127.0.0.1 --port "$PORT" --profile balanced >"$HOME/Library/Logs/KimiK3-Lite-Studio.log" 2>&1 & fi
-for _ in $(seq 1 40); do curl -fsS "${URL}health" >/dev/null 2>&1 && break; sleep 0.25; done
+health="$(curl -fsS "${URL}health" 2>/dev/null || true)"
+if [[ "$health" != *'6.9.0'* ]]; then
+  curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' "${URL}api/app/shutdown" >/dev/null 2>&1 || true
+  sleep 0.5
+  nohup python3 "$ROOT/app/studio_server_v69.py" --host 127.0.0.1 --port "$PORT" --profile balanced >"$HOME/Library/Logs/KimiK3-Lite-Studio.log" 2>&1 &
+fi
+for _ in $(seq 1 60); do
+  health="$(curl -fsS "${URL}health" 2>/dev/null || true)"
+  [[ "$health" == *'6.9.0'* && "$health" == *'hermes_foundation'* ]] && break
+  sleep 0.25
+done
+if [[ "$health" != *'6.9.0'* ]]; then osascript -e 'display alert "KimiK3-Lite Studio" message "Không khởi động được runtime v6.9." as critical' || true; exit 1; fi
 if [ -d "/Applications/Google Chrome.app" ]; then open -na "Google Chrome" --args --app="$URL"; elif [ -d "/Applications/Microsoft Edge.app" ]; then open -na "Microsoft Edge" --args --app="$URL"; else open "$URL"; fi
 LAUNCH
 chmod +x "$MACOS/KimiK3 Lite Studio"
@@ -34,8 +44,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>KimiK3 Lite Studio</string>
 <key>CFBundleDisplayName</key><string>KimiK3 Lite Studio</string>
 <key>CFBundleIdentifier</key><string>local.kimik3.lite.studio</string>
-<key>CFBundleVersion</key><string>6.8.0</string>
-<key>CFBundleShortVersionString</key><string>6.8.0</string>
+<key>CFBundleVersion</key><string>6.9.0</string>
+<key>CFBundleShortVersionString</key><string>6.9.0</string>
 <key>CFBundleExecutable</key><string>KimiK3 Lite Studio</string>
 <key>LSMinimumSystemVersion</key><string>12.0</string>
 <key>NSHighResolutionCapable</key><true/>
