@@ -1,5 +1,18 @@
 # Changelog
 
+## v7.0.0 — Event-Sourced Harness + Reliability
+
+- Nghiên cứu kiến trúc chính thức `deepseek-ai/deepseek-harness` và triển khai lại độc lập các pattern phù hợp với KimiK3-Lite; không copy source upstream.
+- Thêm `harness_runtime.py`: append-only session events, explicit turn/step lifecycle, request checkpoints, capability seams và run inspector.
+- `request_id` trở thành nguồn duy nhất cho idempotency; bỏ lỗi suppress câu hỏi hợp lệ chỉ vì người dùng lặp cùng text trong vài giây.
+- Run đang `running` khi runtime restart được đóng thành `interrupted`, không xóa lịch sử và không tự resume side-effect mơ hồ.
+- Thêm failure taxonomy + retry có giới hạn; chỉ direct model/vision transient failure mới retry, không blind-retry cả Agent Executor có side effect.
+- Tool plan được dedupe; Stall Guard chặn lặp exact tool+arguments và giữ hard cap 6 action proposals.
+- Tool result lớn được spill ra local disk và đưa preview giới hạn vào model context để tránh phình Working Context/RAM.
+- Thêm `verification_engine.py` với host-owned argv recipes, `shell=False`, timeout và Fast/Full verification; model không được tự truyền shell command.
+- Thêm Harness Inspector: trạng thái event/recovery/spill/stall, recent runs và nút `Verify fast`.
+- Server/launcher/package chuyển sang `studio_server_v70.py`, Windows artifact `v7` + macOS DMG `v7`; CI giữ regression Hermes/Model/Team/Parallel/MCP và thêm Harness gates.
+
 ## v6.9.0 — Hermes Foundation + Chat Reliability
 
 - Thêm `hermes_runtime.py` — control plane local lấy cảm hứng kiến trúc từ NousResearch Hermes Agent `v2026.8.31`, triển khai lại độc lập cho runtime ít RAM.
