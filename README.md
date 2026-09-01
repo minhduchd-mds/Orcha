@@ -1,52 +1,55 @@
-# KimiK3-Lite Desktop Studio v6.6
+# KimiK3-Lite Desktop Studio v6.8
 
-Local AI workspace dành cho máy cấu hình thấp, chạy local qua Ollama. Studio tập trung vào **Trò chuyện**, **Công việc / Workflow**, **Skills**, **MCP**, **UI/UX Design Agent**, **Model Manager** và từ v6.6 có **Parallel Agent Orchestrator**.
+Local AI workspace dành cho máy cấu hình thấp, chạy local qua Ollama. Studio gồm **Trò chuyện**, **Công việc / Workflow**, **Skills**, **MCP**, **Model Manager**, **UI/UX Design Agent**, **Parallel Agents**, **Agent Team** và từ v6.8 có **Safe Self-Improvement + Performance + Local Backup/Security Audit**.
 
-## Parallel Agents v6.6
-
-KimiK3 có thể chia một yêu cầu thành nhiều sub-agent chạy song song nhưng vẫn ưu tiên ổn định RAM thấp.
+## Agent runtime
 
 ```text
-Coordinator
-   ├─ Research Agent      ┐
-   ├─ Specialist Agent    ├─ parallel read-only
-   ├─ Critic Agent        │
-   └─ Verifier Agent      ┘
-             ↓
-          Synthesis
-             ↓
-     Write / MCP actions
-             ↓
- serialize + Permission Gate
+User task
+   ↓
+Strategy / RAM Guard
+   ├─ Single Agent
+   ├─ Parallel Agents
+   └─ Agent Team DAG
+          ↓
+Research + Specialist
+          ↓
+Critic + Verifier
+          ↓
+Synthesis
+          ↓
+Write / MCP lane
+          ↓
+Permission Gate
 ```
 
-- Máy khoảng 4 GB RAM: mặc định tối đa **2 worker**.
-- RAM thấp hơn có thể tự hạ xuống 1 worker; máy mạnh hơn có thể tăng nhưng runtime giới hạn tối đa 4.
-- Các pha đọc, reasoning, review, retrieval có thể chạy song song.
-- Các thao tác sửa file, click/type máy tính, Figma/AutoCAD write không chạy đồng thời; chúng vẫn qua Permission Gate để tránh xung đột.
-- Nút **⇉ Song song** trong Chat chạy Parallel Agent mode và Inspector hiển thị capacity + trạng thái từng sub-agent.
+Máy khoảng 4 GB RAM mặc định tối đa 2 worker song song. Read/reasoning/retrieval có thể chạy đồng thời; sửa file, Computer, Figma và AutoCAD vẫn serialize và yêu cầu permission theo policy.
+
+## Safe Self-Improvement v6.8
+
+Kimi lưu outcome và lesson local để chấm điểm chiến lược `single / parallel / team`. Recommendation dựa trên lịch sử cục bộ + RAM Guard.
+
+Safety invariant:
+
+- không tự sửa executable code;
+- không tự tăng quyền;
+- không tự chạy red tools;
+- feedback/lesson chỉ điều chỉnh score và recommendation;
+- người dùng vẫn kiểm soát write actions.
+
+Inspector có **Agent Performance**: success rate, latency, strategy score, recent lessons và feedback `Tốt / Chưa tốt`.
+
+## Local maintenance
+
+- Security audit kiểm tra chuỗi giống secret/token trong config quan trọng và presence của Permission/MCP guards.
+- Backup ZIP local cho skills, workflows, memory, sessions, knowledge, learning, Agent Team và Design reports.
+- Backup nằm trong `KIMIK3_DATA_DIR/backups`.
 
 ## Virtual Context
 
 - **Virtual Context**: kho ngữ cảnh local searchable, 500K–1M token tùy profile.
 - **Working Set**: evidence thực sự nạp vào model mỗi lượt, giữ nhỏ để tiết kiệm RAM.
 - **Native Context**: giới hạn context gốc của model Ollama.
-
-```text
-Virtual Context 1M
-   ├─ Skills
-   ├─ Project knowledge
-   ├─ Memory
-   ├─ Conversation
-   ├─ MCP tools
-   └─ Agents
-        ↓
-Retrieval / Context Builder
-        ↓
-Working Set ~4K default
-        ↓
-Local model
-```
 
 Virtual Context không có nghĩa model attention trực tiếp toàn bộ 1M token cùng lúc.
 
@@ -70,9 +73,18 @@ Design Agent hỗ trợ nhiều screenshot, responsive comparison, component inv
 - `POST /api/chat`
 - `GET /api/context?session=<id>`
 - `GET /api/agents/parallel/capacity`
-- `POST /api/agents/parallel/plan`
 - `POST /api/agents/parallel/run`
-- `GET /api/agents/parallel/runs/<id>`
+- `GET /api/agents/team/capacity`
+- `POST /api/agents/team/plan`
+- `POST /api/agents/team/run`
+- `GET /api/learning/dashboard`
+- `GET /api/learning/lessons`
+- `POST /api/learning/outcome`
+- `POST /api/learning/recommend`
+- `GET /api/maintenance/security`
+- `POST /api/maintenance/security/run`
+- `GET /api/maintenance/backups`
+- `POST /api/maintenance/backup`
 - `POST /api/design/analyze`
 - `POST /v1/chat/completions`
 - `GET /v1/models`
@@ -81,7 +93,7 @@ Design Agent hỗ trợ nhiều screenshot, responsive comparison, component inv
 
 Windows 10/11 x64 và macOS 12+ cần Python 3.10+ và Ollama. Dữ liệu/model weights ở local; model weights do Ollama quản lý.
 
-Release theo tag `v*` tạo hai asset versioned:
+Release theo tag `v*` tạo:
 
 - `KimiK3-Lite-vX.Y.Z-Windows-Portable.zip`
 - `KimiK3-Lite-vX.Y.Z-macOS.dmg`
