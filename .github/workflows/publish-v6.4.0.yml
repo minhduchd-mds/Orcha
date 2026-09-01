@@ -1,0 +1,71 @@
+name: Publish KimiK3-Lite v6.4.0
+
+on:
+  push:
+    branches: [release/v6.4.0]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Windows source
+        shell: pwsh
+        run: |
+          python -m py_compile app/studio_server_v64.py app/model_registry.py app/model_benchmark.py app/kimik3_lite.py app/studio_server.py
+          python app/model_registry.py
+          python app/model_benchmark.py
+          node --check studio/model-manager.js
+      - name: Package Windows portable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v6.4.0-Windows | Out-Null
+          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v6.4.0-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\KimiK3-Lite-v6.4.0-Windows -DestinationPath dist\KimiK3-Lite-v6.4.0-Windows-Portable.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: dist/KimiK3-Lite-v6.4.0-Windows-Portable.zip
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify macOS source
+        run: |
+          python3 -m py_compile app/studio_server_v64.py app/model_registry.py app/model_benchmark.py app/kimik3_lite.py app/studio_server.py
+          python3 app/model_registry.py
+          python3 app/model_benchmark.py
+          node --check studio/model-manager.js
+      - name: Build DMG
+        run: ./packaging/macos/build-dmg.sh
+      - name: Rename DMG
+        run: mv dist/KimiK3-Lite-v6-macOS.dmg dist/KimiK3-Lite-v6.4.0-macOS.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: dist/KimiK3-Lite-v6.4.0-macOS.dmg
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish GitHub Release v6.4.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v6.4.0 release-assets/* --target 2894b6baea32fadc5b8eb4a25d4a2375bd8c2bcd --title "KimiK3-Lite Studio v6.4.0" --notes "KimiK3-Lite Studio v6.4.0 — Model Manager, Auto Router, RAM Guard, custom Ollama model registry, per-model benchmark/compare, fallback routing and UI/UX Vision Lite screenshot audit. Recommended default remains Balanced. UI/UX Vision Lite uses moondream:1.8b-v2-q2_K as the vision observer and Balanced Qwen as the reasoning companion. Model weights are not bundled in release assets."
