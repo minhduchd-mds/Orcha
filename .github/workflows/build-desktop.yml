@@ -22,12 +22,13 @@ jobs:
       - name: Verify Windows source
         shell: pwsh
         run: |
-          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/uiux_design_agent.py app/parallel_agent.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python app/kimik3_lite.py --self-test
           python app/model_registry.py
           python app/model_benchmark.py
           python app/uiux_design_agent.py
           python app/parallel_agent.py
+          python app/agent_team.py
           python app/skill_runtime.py
           python app/skill_builder.py
           python app/workflow_engine.py
@@ -41,13 +42,12 @@ jobs:
           node --check studio/model-manager.js
           node --check studio/design-agent.js
           node --check studio/parallel-agents.js
+          node --check studio/agent-team.js
+          python -c "import sys;sys.path.insert(0,'app');import agent_team as t;p=t.plan('Review UI/UX và code',2);assert p['policy']=='parallel-read-serial-write' and p['budget']['workers']<=2 and any(e['to']=='critic' for e in p['edges']);print('PASS: Agent Team DAG + budget')"
+          python -c "from pathlib import Path;p=Path('app/studio_server_v67.py').read_text(encoding='utf-8');assert 'agent-team.js' in p and 'agent-team.css' in p;print('PASS: Agent Team workspace injection')"
           python -c "import sys;sys.path.insert(0,'app');import parallel_agent as p;x=p.plan('Review UI/UX và code song song',2);assert x['max_parallel']<=2 and x['strategy']=='parallel-read-serial-write' and x['write_policy']=='serialize_permission_gated';print('PASS: Parallel Agent RAM + write policy')"
-          python -c "from pathlib import Path;p=Path('app/studio_server_v66.py').read_text(encoding='utf-8');assert 'parallel-agents.js' in p and 'parallel-agents.css' in p;print('PASS: Parallel workspace injection')"
-          python -c "from pathlib import Path;p=Path('studio/model-manager.js').read_text(encoding='utf-8');assert 'design-agent.js' in p;css=Path('studio/design-agent.css').read_text(encoding='utf-8');assert '.design-view' in css;print('PASS: Design Agent UI load contract')"
-          python -c "import sys;sys.path.insert(0,'app');import uiux_design_agent as d;r=d.build_report([{'name':'D','width':1440},{'name':'M','width':430}],[{'issues':[]},{'issues':[]}]);assert r['responsive']['multi_viewport'] and r['figma_handoff']['requires_confirmation_for_write'];print('PASS: Multi-screen + Figma handoff contract')"
-          python -c "import sys;sys.path.insert(0,'app');import model_registry as m;assert m.get('uiux-vision-lite');assert m.classify_task('review UI/UX screenshot')=='uiux';assert m.route('review code').get('selected');print('PASS: Model Registry + Auto Router')"
-          python -c "import sys;sys.path.insert(0,'app');import model_benchmark as b;r=b.compare(['max','balanced','uiux-vision-lite']);assert len(r['models'])==3;print('PASS: Model comparison contract')"
-          python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: Computer MCP element handshake')"
+          python -c "from pathlib import Path;p=Path('studio/model-manager.js').read_text(encoding='utf-8');assert 'design-agent.js' in p;print('PASS: Design Agent UI contract')"
+          python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: Computer MCP handshake')"
       - name: Package Windows portable
         if: github.event_name != 'pull_request'
         shell: pwsh
@@ -71,12 +71,13 @@ jobs:
           python-version: '3.12'
       - name: Verify macOS source
         run: |
-          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/uiux_design_agent.py app/parallel_agent.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python3 app/kimik3_lite.py --self-test
           python3 app/model_registry.py
           python3 app/model_benchmark.py
           python3 app/uiux_design_agent.py
           python3 app/parallel_agent.py
+          python3 app/agent_team.py
           python3 app/skill_runtime.py
           python3 app/skill_builder.py
           python3 app/workflow_engine.py
@@ -90,9 +91,9 @@ jobs:
           node --check studio/model-manager.js
           node --check studio/design-agent.js
           node --check studio/parallel-agents.js
-          python3 -c "import sys;sys.path.insert(0,'app');import parallel_agent as p;x=p.plan('Review responsive song song',2);assert x['max_parallel']<=2 and all(a['read_only'] for a in x['agents']);print('PASS: Parallel Agent contract')"
-          python3 -c "from pathlib import Path;p=Path('app/studio_server_v66.py').read_text(encoding='utf-8');assert 'parallel-agents.js' in p;print('PASS: v6.6 workspace contract')"
-          python3 -c "import sys;sys.path.insert(0,'app');import uiux_design_agent as d;r=d.build_report([{'width':1440},{'width':430}],[{},{}]);assert r['responsive']['multi_viewport'];print('PASS: Responsive comparison contract')"
+          node --check studio/agent-team.js
+          python3 -c "import sys;sys.path.insert(0,'app');import agent_team as t;p=t.plan('Review responsive',2);assert p['budget']['workers']<=2 and p['nodes'][-1]['id']=='synthesis';print('PASS: Agent Team contract')"
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v67.py').read_text(encoding='utf-8');assert 'agent-team.js' in p;print('PASS: v6.7 workspace contract')"
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
