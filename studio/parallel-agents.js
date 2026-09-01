@@ -1,0 +1,13 @@
+(()=>{
+const el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n};
+let last=null;
+function ensureUI(){
+ const toggle=document.getElementById('agentToggle');if(toggle&&!document.getElementById('parallelAgentBtn')){const b=el('button','tool-btn','⇉ Song song');b.id='parallelAgentBtn';b.title='Chạy nhiều sub-agent read-only song song, RAM Guard tự giới hạn';toggle.after(b);b.onclick=runParallel}
+ const agentCard=document.getElementById('agentCard');if(agentCard&&!document.getElementById('parallelPanel')){const p=el('div','parallel-panel');p.id='parallelPanel';p.innerHTML='<div class="parallel-head"><b>Parallel Agents</b><span id="parallelCapacity">…</span></div><div id="parallelSummary" class="parallel-summary">RAM Guard đang kiểm tra…</div><div id="parallelWorkers"></div>';agentCard.after(p);refreshCapacity()}
+}
+async function refreshCapacity(){try{const c=await api('/api/agents/parallel/capacity');const x=document.getElementById('parallelCapacity'),s=document.getElementById('parallelSummary');if(x)x.textContent=`${c.workers} worker`;if(s)s.textContent=`RAM ${c.ram_gb} GB · safe ${c.safe_workers} · write tools chạy tuần tự`;}catch(e){const s=document.getElementById('parallelSummary');if(s)s.textContent='Parallel runtime chưa sẵn sàng'}}
+function render(r){last=r;const box=document.getElementById('parallelWorkers');if(!box)return;const p=r.plan||{};box.innerHTML=(r.results||p.agents||[]).map(a=>`<div class="parallel-worker ${a.status||'pending'}"><i></i><div><b>${esc(a.name||a.role)}</b><small>${esc(a.status||'pending')}${a.elapsed_ms?` · ${a.elapsed_ms} ms`:''}</small></div></div>`).join('');const s=document.getElementById('parallelSummary');if(s)s.textContent=`${p.strategy||'parallel'} · ${p.max_parallel||1} đồng thời · ${r.elapsed_ms||0} ms`;}
+async function runParallel(){const input=document.getElementById('promptInput');const q=input?.value.trim();if(!q)return input?.focus();const btn=document.getElementById('parallelAgentBtn');btn.disabled=true;input.value='';addMessage(q,'user');addMessage('Đang chia công việc cho các sub-agent song song…','assistant');try{const p=await post('/api/agents/parallel/plan',{query:q,workers:2});render({plan:p,results:p.agents});const r=await post('/api/agents/parallel/run',{query:q,workers:2,profile:state.status?.profile||'balanced',session_id:state.session});render(r);addMessage(r.answer||'Parallel agents đã hoàn tất.','assistant')}catch(e){addMessage(`Parallel Agent lỗi: ${e.message}`,'assistant',true)}finally{btn.disabled=false}}
+window.kimik3Parallel={run:runParallel,refresh:refreshCapacity,last:()=>last};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureUI);else ensureUI();
+})();
