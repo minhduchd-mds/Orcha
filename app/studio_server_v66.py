@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import argparse
+from pathlib import Path
 from http.server import ThreadingHTTPServer
 from urllib.parse import urlsplit
 
@@ -8,10 +9,18 @@ import studio_server_v65 as v65
 import parallel_agent as parallel
 
 class H66(v65.H65):
+    def _parallel_index(self):
+        p=Path(v65.core.ROOT)/'studio'/'index.html'
+        text=p.read_text(encoding='utf-8')
+        text=text.replace('</head>','<link rel="stylesheet" href="/parallel-agents.css"></head>')
+        text=text.replace('</body>','<script src="/parallel-agents.js"></script></body>')
+        text=text.replace('Local Workspace · v6.4','Local Workspace · v6.6')
+        raw=text.encode('utf-8');self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_GET(self):
         path=urlsplit(self.path).path
+        if path in {'/','/index.html'}:return self._parallel_index()
         if path=='/health':
-            return self.send_json(200,{'ok':True,'version':'6.6.0','design_agent':True,'parallel_agents':True,'parallel_policy':'ram-aware-read-only','max_parallel':parallel.worker_limit().get('workers')})
+            guard=parallel.worker_limit();return self.send_json(200,{'ok':True,'version':'6.6.0','design_agent':True,'parallel_agents':True,'parallel_policy':'ram-aware-read-only','max_parallel':guard.get('workers'),'ram_gb':guard.get('ram_gb'),'serial_write':True})
         if path.startswith('/api/agents/parallel/runs/'):
             r=parallel.get(path.rsplit('/',1)[-1]);return self.send_json(200,r) if r else self.send_json(404,{'error':'Không tìm thấy parallel run'})
         if path=='/api/agents/parallel/capacity':return self.send_json(200,parallel.worker_limit())
@@ -22,8 +31,7 @@ class H66(v65.H65):
             try:b=self.body()
             except Exception:return self.send_json(400,{'error':'invalid json'})
             try:
-                q=str(b.get('message') or b.get('query') or '').strip()
-                workers=b.get('workers')
+                q=str(b.get('message') or b.get('query') or '').strip();workers=b.get('workers')
                 if path=='/api/agents/parallel/plan':
                     if not q:return self.send_json(400,{'error':'Thiếu query'})
                     return self.send_json(200,parallel.plan(q,workers))
