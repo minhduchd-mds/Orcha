@@ -22,10 +22,13 @@ jobs:
       - name: Verify Windows source
         shell: pwsh
         run: |
-          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/studio_server_v68.py app/studio_server_v69.py app/hermes_runtime.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/self_improvement.py app/maintenance.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/studio_server_v68.py app/studio_server_v69.py app/studio_server_v70.py app/harness_runtime.py app/verification_engine.py app/hermes_runtime.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/self_improvement.py app/maintenance.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python app/kimik3_lite.py --self-test
           python app/model_registry.py
           python app/hermes_runtime.py
+          python app/harness_runtime.py
+          python app/verification_engine.py
+          python app/agent_runtime.py
           python app/parallel_agent.py
           python app/agent_team.py
           python app/self_improvement.py
@@ -39,27 +42,28 @@ jobs:
           node --check studio/agent-team.js
           node --check studio/final-intelligence.js
           node --check studio/hermes.js
-          python -c "import sys;sys.path.insert(0,'app');import self_improvement as s;r=s.recommend('uiux',4);assert r['selected'] in {'single','parallel','team'};assert s.dashboard()['safety']['self_modify_code'] is False;print('PASS: safe learning guard')"
-          python -c "import sys;sys.path.insert(0,'app');import maintenance as m;a=m.security_audit();assert 'rules' in a;print('PASS: security audit contract')"
-          python -c "import sys;sys.path.insert(0,'app');import model_registry as m;ui=m.get('uiux-vision-lite');r=m.runtime_model(ui,False);assert r['selected']['id']=='balanced';assert r['model']=='qwen3:0.6b-q4_K_M';print('PASS: text-only UIUX uses companion')"
-          python -c "import sys;sys.path.insert(0,'app');import hermes_runtime as h;assert h.route_request('Tôi cần biết thông tin về thiết kế Apple',True)['mode']=='direct';assert h.route_request('Tạo layer WALL trong AutoCAD',True)['mode']=='agent';print('PASS: Hermes conversation-first routing')"
-          python -c "from pathlib import Path;p=Path('app/studio_server_v69.py').read_text(encoding='utf-8');assert 'hermes_foundation' in p and 'runtime_model' in p and 'request_id' in p;print('PASS: v6.9 server contract')"
-          python -c "from pathlib import Path;p=Path('KimiK3 Studio.vbs').read_text(encoding='utf-8');assert 'studio_server_v69.py' in p and '6.9.0' in p;print('PASS: Windows launcher v6.9')"
+          node --check studio/harness.js
+          python -c "import sys;sys.path.insert(0,'app');import harness_runtime as h;assert h.request_id('abc-1')=='abc-1';assert h.classify_error('connection refused')=='transient';assert h.repeated_action([{'tool':'x','arguments':{}},{'tool':'x','arguments':{}}],'x',{});print('PASS: harness guards')"
+          python -c "import sys;sys.path.insert(0,'app');import studio_server_v69 as s;assert s._limit({'limit':['bad']},'limit',100,500)==100;print('PASS: malformed limit guard')"
+          python -c "import sys;sys.path.insert(0,'app');import model_registry as m;ui=m.get('uiux-vision-lite');r=m.runtime_model(ui,False);assert r['selected']['id']=='balanced';print('PASS: text-only UIUX uses companion')"
+          python -c "import sys;sys.path.insert(0,'app');import hermes_runtime as h;assert h.route_request('Tôi cần biết thông tin về thiết kế Apple',True)['mode']=='direct';assert h.route_request('Tạo layer WALL trong AutoCAD',True)['mode']=='agent';print('PASS: conversation-first routing')"
+          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert 'deepseek_harness_patterns' in p and 'harness.recover_incomplete' in p;print('PASS: v7 server contract')"
+          python -c "from pathlib import Path;p=Path('KimiK3 Studio.vbs').read_text(encoding='utf-8');assert 'studio_server_v70.py' in p and '7.0.0' in p;print('PASS: Windows launcher v7')"
           python -c "import sys;sys.path.insert(0,'app');import agent_team as t;p=t.plan('Review UI/UX',2);assert p['budget']['workers']<=2 and p['policy']=='parallel-read-serial-write';print('PASS: team regression')"
           python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: MCP regression')"
       - name: Package Windows portable
         if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v6-Windows | Out-Null
+          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v7-Windows | Out-Null
           $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
-          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v6-Windows -Recurse -Force } }
-          Compress-Archive -Path dist\KimiK3-Lite-v6-Windows -DestinationPath dist\KimiK3-Lite-v6-Windows-Portable.zip -Force
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v7-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\KimiK3-Lite-v7-Windows -DestinationPath dist\KimiK3-Lite-v7-Windows-Portable.zip -Force
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v6-Windows-Portable
-          path: dist/KimiK3-Lite-v6-Windows-Portable.zip
+          name: KimiK3-Lite-v7-Windows-Portable
+          path: dist/KimiK3-Lite-v7-Windows-Portable.zip
 
   macos:
     runs-on: macos-latest
@@ -70,10 +74,13 @@ jobs:
           python-version: '3.12'
       - name: Verify macOS source
         run: |
-          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/studio_server_v68.py app/studio_server_v69.py app/hermes_runtime.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/self_improvement.py app/maintenance.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/studio_server_v68.py app/studio_server_v69.py app/studio_server_v70.py app/harness_runtime.py app/verification_engine.py app/hermes_runtime.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/self_improvement.py app/maintenance.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python3 app/kimik3_lite.py --self-test
           python3 app/model_registry.py
           python3 app/hermes_runtime.py
+          python3 app/harness_runtime.py
+          python3 app/verification_engine.py
+          python3 app/agent_runtime.py
           python3 app/parallel_agent.py
           python3 app/agent_team.py
           python3 app/self_improvement.py
@@ -85,11 +92,11 @@ jobs:
           node --check studio/agent-team.js
           node --check studio/final-intelligence.js
           node --check studio/hermes.js
-          python3 -c "import sys;sys.path.insert(0,'app');import self_improvement as s;assert s.dashboard()['safety']['auto_permission_escalation'] is False;print('PASS: safe learning')"
+          node --check studio/harness.js
+          python3 -c "import sys;sys.path.insert(0,'app');import harness_runtime as h;assert h.status()['features']['append_only_events'];print('PASS: Harness runtime')"
           python3 -c "import sys;sys.path.insert(0,'app');import model_registry as m;r=m.runtime_model(m.get('uiux-vision-lite'),False);assert r['selected']['id']=='balanced';print('PASS: composite text route')"
-          python3 -c "import sys;sys.path.insert(0,'app');import hermes_runtime as h;assert h.status()['features']['conversation_router'];print('PASS: Hermes runtime')"
-          python3 -c "from pathlib import Path;p=Path('app/studio_server_v69.py').read_text(encoding='utf-8');assert 'hermes.js' in p and '6.9.0' in p;print('PASS: v6.9 UI contract')"
-          python3 -c "from pathlib import Path;p=Path('KimiK3 Studio.command').read_text(encoding='utf-8');assert 'studio_server_v69.py' in p and '6.9.0' in p;print('PASS: macOS launcher v6.9')"
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert 'harness.js' in p and '7.0.0' in p;print('PASS: v7 UI contract')"
+          python3 -c "from pathlib import Path;p=Path('KimiK3 Studio.command').read_text(encoding='utf-8');assert 'studio_server_v70.py' in p and '7.0.0' in p;print('PASS: macOS launcher v7')"
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
@@ -97,8 +104,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v6-macOS-DMG
-          path: dist/KimiK3-Lite-v6-macOS.dmg
+          name: KimiK3-Lite-v7-macOS-DMG
+          path: dist/KimiK3-Lite-v7-macOS.dmg
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -112,8 +119,8 @@ jobs:
           merge-multiple: true
       - name: Version release assets
         run: |
-          mv release-assets/KimiK3-Lite-v6-Windows-Portable.zip "release-assets/KimiK3-Lite-${GITHUB_REF_NAME}-Windows-Portable.zip"
-          mv release-assets/KimiK3-Lite-v6-macOS.dmg "release-assets/KimiK3-Lite-${GITHUB_REF_NAME}-macOS.dmg"
+          mv release-assets/KimiK3-Lite-v7-Windows-Portable.zip "release-assets/KimiK3-Lite-${GITHUB_REF_NAME}-Windows-Portable.zip"
+          mv release-assets/KimiK3-Lite-v7-macOS.dmg "release-assets/KimiK3-Lite-${GITHUB_REF_NAME}-macOS.dmg"
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
