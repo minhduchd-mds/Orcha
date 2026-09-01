@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>KimiK3 Lite · Local Workspace</title><link rel="stylesheet" href="/styles.css"><script defer src="/app.js"></script></head>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>KimiK3 Lite · Local Workspace</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/model-manager.css"><script defer src="/app.js"></script><script defer src="/model-manager.js"></script></head>
 <body><div class="shell">
 <aside class="sidebar">
-  <div class="brand"><div class="logo">K</div><div><b>KimiK3 Lite</b><small>Local Workspace · v6.3</small></div></div>
+  <div class="brand"><div class="logo">K</div><div><b>KimiK3 Lite</b><small>Local Workspace · v6.4</small></div></div>
   <button class="new-chat" id="newChat">＋ Cuộc trò chuyện mới</button>
   <nav class="nav">
     <button class="nav-item active" data-view="chat">◉ <span>Trò chuyện</span></button>
@@ -13,14 +13,14 @@
     <button class="nav-item" data-view="skills">⚡ <span>Kỹ năng</span><em id="skillNavCount">0</em></button>
     <button class="nav-item" id="indexSide">▣ <span>Kiến thức</span></button>
     <button class="nav-item" id="connectionsSide">⌘ <span>Kết nối MCP</span></button>
-    <button class="nav-item" id="modelSide">◫ <span>Model local</span></button>
+    <button class="nav-item" id="modelSide">◫ <span>Model local</span><em id="modelNavCount">0</em></button>
   </nav>
   <div class="recent-block"><div class="side-label">Gần đây</div><div id="recentSessions" class="recent-list"><button>AutoCAD Drafting</button><button>Project review</button></div></div>
   <div class="runtime-card"><div><i id="runtimeDot"></i><span id="runtimeText">Đang kiểm tra…</span></div><small id="runtimeMeta">Local only</small></div>
 </aside>
 
 <main class="main">
-  <header class="topbar"><div><h1 id="pageTitle">Trò chuyện</h1><p id="pageSubtitle">Hỏi, phân tích và thực hiện công việc với dữ liệu trên máy.</p></div><div class="top-actions"><button id="runBenchmark" class="top-btn">KII</button><button id="contextPill" class="top-btn">Context · 1M</button><select id="reasoningMode" class="top-btn"><option value="auto">Auto</option><option value="fast">Nhanh</option><option value="smart">Cân bằng</option><option value="deep">Sâu</option></select></div></header>
+  <header class="topbar"><div><h1 id="pageTitle">Trò chuyện</h1><p id="pageSubtitle">Hỏi, phân tích và thực hiện công việc với dữ liệu trên máy.</p></div><div class="top-actions"><select id="modelMode" class="top-btn model-mode"><option value="auto">Model · Auto</option></select><button id="runBenchmark" class="top-btn">KII</button><button id="contextPill" class="top-btn">Context · 1M</button><select id="reasoningMode" class="top-btn"><option value="auto">Auto</option><option value="fast">Nhanh</option><option value="smart">Cân bằng</option><option value="deep">Sâu</option></select></div></header>
 
   <section class="view active" id="chatView">
     <div class="conversation" id="conversation"><section class="welcome" id="welcome"><div class="spark">✦</div><h2>Anh muốn Kimi làm gì?</h2><p>Chat tự nhiên, dùng Kỹ năng, project local và MCP tools khi cần.</p><div class="suggestions"><button data-prompt="Phân tích project đang index và chỉ ra 5 rủi ro quan trọng nhất.">Phân tích project</button><button data-prompt="Dùng kỹ năng AutoCAD để tạo một phòng 4m x 5m, layer WALL, thêm text và kích thước.">Tạo bản vẽ AutoCAD</button><button data-prompt="Review UI/UX hiện tại và đề xuất P0, P1, P2.">Review UI/UX</button></div></section></div>
@@ -39,6 +39,15 @@
     <div class="workspace-head"><div><span class="eyebrow">SKILL LIBRARY</span><h2>Kỹ năng của tôi</h2><p>Quản lý, cập nhật, nhân bản, bật/tắt và theo dõi phiên bản.</p></div><button id="newSkill" class="btn primary">＋ Tạo kỹ năng</button></div>
     <div class="skills-layout"><aside class="skill-filters"><button class="filter active" data-skill-filter="all">Tất cả</button><button class="filter" data-skill-filter="active">Đang bật</button><button class="filter" data-skill-filter="disabled">Đã tắt</button><button class="filter" data-skill-filter="draft">Bản nháp</button></aside><section><div id="skillLibrary" class="skill-grid"></div></section></div>
   </section>
+
+  <section class="view models-view" id="modelsView">
+    <div class="workspace-head"><div><span class="eyebrow">MODEL MANAGER</span><h2>Model local</h2><p>Thêm model, kiểm tra RAM, so sánh capability và để Auto Router chọn model phù hợp.</p></div><button id="addCustomModel" class="btn primary">＋ Thêm model</button></div>
+    <div class="model-summary"><div><span>RAM máy</span><b id="systemRam">—</b></div><div><span>Router</span><b id="routerState">Auto</b></div><div><span>Đã cài</span><b id="installedModelCount">0</b></div><div><span>Đang dùng</span><b id="activeModelLabel">Auto</b></div></div>
+    <div class="model-section-title"><div><b>Khuyến nghị cho máy này</b><small>Model vượt RAM khuyến nghị sẽ không được Auto Router chọn.</small></div></div>
+    <div id="modelLibrary" class="model-grid"></div>
+    <div class="model-section-title"><div><b>UI/UX Specialist</b><small>Vision-first: ảnh → quan sát → Balanced companion → UX reasoning.</small></div></div>
+    <div id="uiuxModelCard"></div>
+  </section>
 </main>
 
 <aside class="inspector" id="inspector"><div class="inspector-title"><div><span class="eyebrow">INSPECTOR</span><h3>Local intelligence</h3></div><button id="refreshInspector">↻</button></div>
@@ -54,7 +63,8 @@
 
 <dialog id="workflowDialog" class="modal"><div class="modal-head"><div><span class="eyebrow">WORKFLOW</span><h2>Workflow</h2></div><button data-close="workflowDialog">×</button></div><div class="modal-body"><label>Tên</label><input id="wfName"><label>Mô tả</label><textarea id="wfDescription"></textarea><label>Loại</label><select id="wfCategory"><option value="general">General</option><option value="cad">CAD</option><option value="code">Code</option><option value="design">UI/UX</option><option value="project">Project</option></select></div><div class="modal-actions"><button id="saveWorkflow" class="btn primary">Lưu</button></div></dialog>
 
-<dialog id="modelDialog" class="modal"><div class="modal-head"><div><span class="eyebrow">LOCAL MODEL</span><h2>Model local</h2></div><button data-close="modelDialog">×</button></div><div class="modal-body"><select id="profileSelect"><option value="max">MAX · ~241 MB</option><option value="balanced" selected>Balanced · ~522 MB</option><option value="quality">Quality · ~1.4 GB</option></select><button id="installModel" class="btn primary full">Cài / sửa model</button><p id="installStatus"></p><div class="progress"><i id="installProgress"></i></div></div></dialog>
+<dialog id="modelDialog" class="modal"><div class="modal-head"><div><span class="eyebrow">QUICK MODEL SETUP</span><h2>Model local</h2></div><button data-close="modelDialog">×</button></div><div class="modal-body"><select id="profileSelect"><option value="max">MAX · ~241 MB</option><option value="balanced" selected>Balanced · ~522 MB</option><option value="quality">Quality · ~1.4 GB</option><option value="uiux">UI/UX Vision Lite · ~1.5 GB</option></select><button id="installModel" class="btn primary full">Cài / sửa model</button><p id="installStatus"></p><div class="progress"><i id="installProgress"></i></div></div></dialog>
+<dialog id="customModelDialog" class="modal"><div class="modal-head"><div><span class="eyebrow">CUSTOM OLLAMA</span><h2>Thêm model</h2><p>Registry local, không sửa core.</p></div><button data-close="customModelDialog">×</button></div><div class="modal-body"><label>Model ID</label><input id="customModelId" placeholder="my-model"><label>Tên hiển thị</label><input id="customModelName" placeholder="My Local Model"><label>Ollama tag</label><input id="customModelTag" placeholder="qwen3:0.6b"><div class="two-fields"><div><label>Dung lượng MB</label><input id="customModelSize" type="number" value="500"></div><div><label>RAM tối thiểu GB</label><input id="customModelRam" type="number" value="4"></div></div><label>Native context</label><input id="customModelContext" type="number" value="4096"><label>Vai trò, cách nhau dấu phẩy</label><input id="customModelRoles" placeholder="chat, code, tools"></div><div class="modal-actions"><span id="customModelStatus"></span><button id="saveCustomModel" class="btn primary">Lưu model</button></div></dialog>
 <dialog id="indexDialog" class="modal"><div class="modal-head"><div><span class="eyebrow">KNOWLEDGE</span><h2>Thêm project / tài liệu</h2></div><button data-close="indexDialog">×</button></div><div class="modal-body"><div class="path-row"><input id="indexPath" placeholder="Đường dẫn thư mục"><button id="pickFolder" class="btn secondary">Chọn…</button></div><button id="startIndex" class="btn primary full">Index ngay</button><p id="indexStatus"></p></div></dialog>
 <dialog id="permissionDialog" class="modal"><div class="modal-head"><div><span class="eyebrow warn">PERMISSION</span><h2>Kimi cần quyền thực hiện</h2></div><button data-close="permissionDialog">×</button></div><div class="modal-body"><div id="permissionTool"></div></div><div class="modal-actions"><button id="denyPermission" class="btn secondary">Từ chối</button><button id="allowOnce" class="btn secondary">Cho phép lần này</button><button id="allowSession" class="btn primary">Cho phép phiên này</button></div></dialog>
 </body></html>
