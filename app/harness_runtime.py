@@ -152,7 +152,8 @@ def checkpoint(run: dict, event_type: str, data: dict | None = None) -> dict:
 
 
 def _response_key(session_id: str, rid: str) -> Path:
-    key = hashlib.sha256((str(session_id) + '\0' + rid).encode('utf-8')).hexdigest()
+    canonical_session = _safe(session_id)
+    key = hashlib.sha256((canonical_session + '\0' + rid).encode('utf-8')).hexdigest()
     return RESPONSES / f'{key}.json'
 
 
@@ -282,12 +283,14 @@ def repeated_action(actions: list[dict], name: str, arguments: dict | None = Non
 
 
 def normalize_tool_result(run_id: str, call_id: str, value: Any, limit: int = 12000) -> dict:
+    safe_value = value
     try:
-        raw = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        raw = json.dumps(safe_value, ensure_ascii=False, sort_keys=True)
     except Exception:
-        raw = json.dumps({'repr': repr(value)[:4000]}, ensure_ascii=False)
+        safe_value = {'repr': repr(value)[:4000], 'non_json': True}
+        raw = json.dumps(safe_value, ensure_ascii=False, sort_keys=True)
     if len(raw) <= max(1000, int(limit)):
-        return {'spilled': False, 'value': value}
+        return {'spilled': False, 'value': safe_value}
     folder = SPILL / _safe(run_id, 'run')
     folder.mkdir(parents=True, exist_ok=True)
     p = folder / f'{_safe(call_id, "call")}.json'
@@ -379,9 +382,12 @@ def self_test() -> None:
         raise AssertionError('invalid request id accepted')
     except ValueError:
         pass
+    assert _response_key('a/b', 'r') == _response_key('a-b', 'r')
     assert repeated_action([{'tool': 'a', 'arguments': {'x': 1}}, {'tool': 'a', 'arguments': {'x': 1}}], 'a', {'x': 1})
     assert classify_error('connection refused') == 'transient'
     assert classify_error('permission denied') == 'permission'
+    normalized = normalize_tool_result('self-test', 'non-json', object())
+    assert normalized['spilled'] is False and normalized['value'].get('non_json') is True
     r = CapabilityRegistry(); dispose = r.register('x', 1); assert r.get('x') == 1; dispose(); assert r.get('x') is None
     print('PASS: harness event/idempotency/retry/stall/capability contracts')
 
