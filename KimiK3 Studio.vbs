@@ -12,7 +12,7 @@ Function ServerReady()
   r.Open "GET", url & "health", False
   r.Send
   body = r.ResponseText
-  ServerReady = (Err.Number = 0 And r.Status = 200 And InStr(1, body, "6.9.0", 1) > 0 And InStr(1, body, "hermes_foundation", 1) > 0)
+  ServerReady = (Err.Number = 0 And r.Status = 200 And InStr(1, body, "7.0.0", 1) > 0 And InStr(1, body, "deepseek_harness_patterns", 1) > 0)
   Err.Clear
   On Error GoTo 0
 End Function
@@ -30,7 +30,7 @@ Sub StopOldServer()
 End Sub
 If Not ServerReady() Then
   StopOldServer
-  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v69.py"" --profile balanced --port 11435"""
+  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v70.py"" --profile balanced --port 11435"""
   sh.Run cmd, 0, False
   ok = False
   For i = 1 To 60
@@ -41,7 +41,7 @@ Else
   ok = True
 End If
 If Not ok Then
-  MsgBox "KimiK3-Lite Studio v6.9 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "KimiK3-Lite"
+  MsgBox "KimiK3-Lite Studio v7.0 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "KimiK3-Lite"
   WScript.Quit 1
 End If
 edge = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
