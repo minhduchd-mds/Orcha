@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -20,19 +22,25 @@ jobs:
       - name: Verify Windows source
         shell: pwsh
         run: |
-          python -m py_compile app/kimik3_lite.py app/workflow_engine.py app/studio_server.py
+          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/permission_engine.py app/mcp_gateway.py app/agent_runtime.py
           python app/kimik3_lite.py --self-test
+          python app/skill_runtime.py
+          python app/permission_engine.py
+          python app/mcp_gateway.py
+          python app/agent_runtime.py
       - name: Package Windows portable
+        if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v5-Windows | Out-Null
-          $items = @('app','studio','config','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
-          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v5-Windows -Recurse -Force } }
-          Compress-Archive -Path dist\KimiK3-Lite-v5-Windows -DestinationPath dist\KimiK3-Lite-v5-Windows-Portable.zip -Force
+          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v6-Windows | Out-Null
+          $items = @('app','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v6-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\KimiK3-Lite-v6-Windows -DestinationPath dist\KimiK3-Lite-v6-Windows-Portable.zip -Force
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v5-Windows-Portable
-          path: dist/KimiK3-Lite-v5-Windows-Portable.zip
+          name: KimiK3-Lite-v6-Windows-Portable
+          path: dist/KimiK3-Lite-v6-Windows-Portable.zip
 
   macos:
     runs-on: macos-latest
@@ -43,14 +51,20 @@ jobs:
           python-version: '3.12'
       - name: Verify macOS source
         run: |
-          python3 -m py_compile app/kimik3_lite.py app/workflow_engine.py app/studio_server.py
+          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/permission_engine.py app/mcp_gateway.py app/agent_runtime.py
           python3 app/kimik3_lite.py --self-test
+          python3 app/skill_runtime.py
+          python3 app/permission_engine.py
+          python3 app/mcp_gateway.py
+          python3 app/agent_runtime.py
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
+        if: github.event_name != 'pull_request'
         run: ./packaging/macos/build-dmg.sh
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v5-macOS-DMG
+          name: KimiK3-Lite-v6-macOS-DMG
           path: dist/KimiK3-Lite-v5-macOS.dmg
 
   release:
