@@ -7,6 +7,7 @@ from http.server import ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
 import agent_runtime as agents
+import harness_runtime as harness
 import hermes_runtime as hermes
 import kimik3_lite as core
 import model_registry as registry
@@ -15,6 +16,13 @@ import studio_server_v68 as v68
 
 def _legacy_v64():
     return v68.v67.v66.v65.v64
+
+
+def _limit(query: dict, key: str, default: int, maximum: int) -> int:
+    try:
+        return max(1, min(int(query.get(key, [str(default)])[0]), maximum))
+    except (TypeError, ValueError):
+        return default
 
 
 class H69(v68.H68):
@@ -69,52 +77,65 @@ class H69(v68.H68):
             return self.send_json(200, hermes.agent_roster())
         if path == '/api/hermes/session':
             sid = str(query.get('session', ['default'])[0])
-            limit = int(query.get('limit', ['100'])[0])
-            return self.send_json(200, hermes.transcript(sid, limit))
+            return self.send_json(200, hermes.transcript(sid, _limit(query, 'limit', 100, 500)))
         if path == '/api/hermes/peers':
-            limit = int(query.get('limit', ['100'])[0])
-            return self.send_json(200, hermes.peer_history(limit))
+            return self.send_json(200, hermes.peer_history(_limit(query, 'limit', 100, 500)))
         if path == '/api/hermes/runs':
-            limit = int(query.get('limit', ['50'])[0])
-            return self.send_json(200, hermes.control_runs(limit))
+            return self.send_json(200, hermes.control_runs(_limit(query, 'limit', 50, 200)))
         return super().do_GET()
 
     def _chat69(self, b: dict):
         user = str(b.get('message') or '').strip()
         sid = str(b.get('session_id') or 'default')
-        request_id = str(b.get('request_id') or '').strip()
         images = b.get('images') if isinstance(b.get('images'), list) else []
         if not user:
             return self.send_json(400, {'error': 'Thiếu nội dung'})
+        try:
+            rid = harness.request_id(b.get('request_id'))
+        except ValueError as exc:
+            return self.send_json(400, {'error': str(exc)})
 
-        cached = hermes.cached_response(sid, request_id)
+        # Idempotency is identity-based only. Repeating the same human sentence is
+        # legitimate and must never be suppressed just because it is close in time.
+        cached = harness.cached_response(sid, rid) or hermes.cached_response(sid, rid)
         if cached:
-            cached = dict(cached)
-            cached['idempotent_replay'] = True
-            return self.send_json(200, cached)
-        duplicate = hermes.recent_duplicate(sid, user, 3)
-        if duplicate:
-            duplicate = dict(duplicate)
-            duplicate['duplicate_suppressed'] = True
-            return self.send_json(200, duplicate)
+            replay = dict(cached)
+            replay['idempotent_replay'] = True
+            replay['request_id'] = rid
+            return self.send_json(200, replay)
 
         preferred = str(b.get('model_id') or getattr(self.server, 'model_mode', 'auto') or 'auto')
         model_route = registry.route(user, bool(images), preferred)
         selected = model_route.get('selected') or registry.get('balanced') or {}
         selected_id = str(selected.get('id') or 'balanced')
         hroute = hermes.route_request(user, bool(b.get('agent', False)))
+        run = harness.begin(sid, rid, user, {'hermes': hroute, 'model': selected_id})
+        run = harness.checkpoint(run, 'step/start', {'step': 1})
+        harness.append_event(sid, 'user/message', {'content': user[:12000], 'source': 'chat'}, run['id'])
 
         try:
             if images and selected_id == 'uiux-vision-lite':
-                result = _legacy_v64().uiux_pipeline(user, images, self.server, str(b.get('mode', 'auto')), sid)
+                result = harness.call_with_retry(
+                    lambda: _legacy_v64().uiux_pipeline(user, images, self.server, str(b.get('mode', 'auto')), sid),
+                    attempts=2,
+                )
                 hroute = {**hroute, 'mode': 'design-composite', 'reason': 'image+uiux'}
             else:
                 runtime = registry.runtime_model(selected, bool(images))
                 model = str(runtime.get('model') or self.server.model)
+                harness.append_event(sid, 'request/header', {
+                    'model': model,
+                    'selected_model': selected_id,
+                    'runtime_reason': runtime.get('reason'),
+                    'mode': str(b.get('mode', 'auto')),
+                    'agent': hroute.get('mode') == 'agent',
+                }, run['id'])
                 if hroute.get('mode') == 'agent':
+                    # Do not retry a whole agent execution automatically: a prior
+                    # attempt may already have produced an approved side effect.
                     result = agents.run(user, self.server.profile, model, self.server.ollama, str(b.get('mode', 'auto')), sid)
                 else:
-                    result = core.answer_query(
+                    result = harness.call_with_retry(lambda: core.answer_query(
                         user,
                         self.server.profile,
                         model,
@@ -123,7 +144,7 @@ class H69(v68.H68):
                         int(b.get('top_k', 6)),
                         int(b.get('timeout', 300)),
                         sid,
-                    )
+                    ), attempts=2)
                 result['model_route'] = {
                     **model_route,
                     'runtime_selected': runtime.get('selected'),
@@ -131,30 +152,44 @@ class H69(v68.H68):
                 }
             result['hermes'] = {
                 'route': hroute,
-                'request_id': request_id,
+                'request_id': rid,
                 'framework': 'v2026.8.31-inspired',
             }
-            hermes.record_turn(sid, request_id, user, result, hroute)
+            result['request_id'] = rid
+            hermes.record_turn(sid, rid, user, result, hroute)
+            harness.finish(run, result)
             return self.send_json(200, result)
-        except Exception as e:
+        except Exception as primary_error:
+            harness.checkpoint(run, 'request/error', {
+                'kind': harness.classify_error(primary_error),
+                'message': str(primary_error)[:2000],
+                'retry': 'fallback-balanced',
+            })
             fallback = registry.get('balanced')
-            if fallback and fallback.get('ram_ok'):
+            if hroute.get('mode') != 'agent' and fallback and fallback.get('ram_ok'):
                 try:
                     model = str(fallback.get('ollama_tag') or self.server.model)
-                    result = core.answer_query(user, 'balanced', model, self.server.ollama, str(b.get('mode', 'auto')), 6, 300, sid)
+                    result = harness.call_with_retry(
+                        lambda: core.answer_query(user, 'balanced', model, self.server.ollama, str(b.get('mode', 'auto')), 6, 300, sid),
+                        attempts=2,
+                    )
                     result['model_route'] = {
                         'task': model_route.get('task'),
                         'selected': fallback,
                         'runtime_selected': fallback,
                         'reason': 'hermes-fallback',
-                        'previous_error': str(e),
+                        'previous_error': str(primary_error),
                     }
-                    result['hermes'] = {'route': {**hroute, 'fallback': True}, 'request_id': request_id}
-                    hermes.record_turn(sid, request_id, user, result, hroute)
+                    result['hermes'] = {'route': {**hroute, 'fallback': True}, 'request_id': rid}
+                    result['request_id'] = rid
+                    hermes.record_turn(sid, rid, user, result, hroute)
+                    harness.finish(run, result)
                     return self.send_json(200, result)
-                except Exception:
-                    pass
-            return self.send_json(502, {'error': str(e), 'hermes_route': hroute})
+                except Exception as fallback_error:
+                    harness.fail(run, fallback_error)
+                    return self.send_json(502, {'error': str(fallback_error), 'previous_error': str(primary_error), 'hermes_route': hroute, 'request_id': rid})
+            harness.fail(run, primary_error)
+            return self.send_json(502, {'error': str(primary_error), 'hermes_route': hroute, 'request_id': rid})
 
     def do_POST(self):
         path = urlsplit(self.path).path
@@ -172,10 +207,8 @@ class H69(v68.H68):
             try:
                 if path == '/api/hermes/peer':
                     return self.send_json(200, hermes.peer_message(
-                        str(b.get('source') or 'general'),
-                        str(b.get('target') or ''),
-                        str(b.get('text') or ''),
-                        str(b.get('session_id') or 'default'),
+                        str(b.get('source') or 'general'), str(b.get('target') or ''),
+                        str(b.get('text') or ''), str(b.get('session_id') or 'default'),
                     ))
                 if path == '/api/hermes/run/register':
                     return self.send_json(200, hermes.register_control_run(str(b.get('kind') or 'subagent'), b.get('metadata') if isinstance(b.get('metadata'), dict) else {}))
