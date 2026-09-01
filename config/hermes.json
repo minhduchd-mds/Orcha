@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "inspired_by": {
+    "project": "NousResearch/hermes-agent",
+    "release": "v2026.8.31",
+    "license": "MIT",
+    "note": "Architecture concepts only; KimiK3-Lite implementation is independently written for the local low-RAM runtime."
+  },
+  "routing": {
+    "default": "auto",
+    "chat_without_action": "direct",
+    "matched_skill": "agent",
+    "side_effect_request": "agent"
+  },
+  "agents": [
+    {
+      "id": "general",
+      "name": "General",
+      "role": "chat",
+      "description": "Trao đổi, giải thích, tổng hợp và trả lời trực tiếp."
+    },
+    {
+      "id": "research",
+      "name": "Research",
+      "role": "read",
+      "description": "Thu thập context và bằng chứng trước khi kết luận."
+    },
+    {
+      "id": "builder",
+      "name": "Builder",
+      "role": "action",
+      "description": "Thực hiện tác vụ qua tool đã đăng ký và Permission Gate."
+    },
+    {
+      "id": "verifier",
+      "name": "Verifier",
+      "role": "verify",
+      "description": "Kiểm tra đầu ra, tool observations và điều kiện hoàn tất."
+    }
+  ],
+  "safety": {
+    "protected_instruction_write": "confirm",
+    "red_tools": "deny",
+    "peer_messages": "local_only",
+    "max_recent_transcript": 200
+  }
+}
