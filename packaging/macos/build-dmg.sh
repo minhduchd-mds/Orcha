@@ -8,7 +8,7 @@ MACOS="$APP/Contents/MacOS"
 DMGROOT="$OUT/dmg-root"
 rm -rf "$OUT"
 mkdir -p "$RES" "$MACOS" "$DMGROOT"
-for item in app studio config knowledge docs scripts Modelfile.v3 Modelfile.v3.max Modelfile.v3.quality README.md LICENSE-NOTE.md CHANGELOG.md .kimik3ignore; do
+for item in app mcp_servers studio config skills knowledge docs scripts Modelfile.v3 Modelfile.v3.max Modelfile.v3.quality README.md LICENSE-NOTE.md CHANGELOG.md .kimik3ignore; do
   [ -e "$ROOT/$item" ] && cp -R "$ROOT/$item" "$RES/"
 done
 cat > "$MACOS/KimiK3 Lite Studio" <<'LAUNCH'
@@ -38,8 +38,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>KimiK3 Lite Studio</string>
 <key>CFBundleDisplayName</key><string>KimiK3 Lite Studio</string>
 <key>CFBundleIdentifier</key><string>local.kimik3.lite.studio</string>
-<key>CFBundleVersion</key><string>5.1.0</string>
-<key>CFBundleShortVersionString</key><string>5.1.0</string>
+<key>CFBundleVersion</key><string>6.1.0</string>
+<key>CFBundleShortVersionString</key><string>6.1.0</string>
 <key>CFBundleExecutable</key><string>KimiK3 Lite Studio</string>
 <key>LSMinimumSystemVersion</key><string>12.0</string>
 <key>NSHighResolutionCapable</key><true/>
@@ -47,4 +47,4 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 PLIST
 cp -R "$APP" "$DMGROOT/"
 ln -s /Applications "$DMGROOT/Applications"
-hdiutil create -volname "KimiK3 Lite Studio" -srcfolder "$DMGROOT" -ov -format UDZO "$OUT/KimiK3-Lite-v5-macOS.dmg"
+hdiutil create -volname "KimiK3 Lite Studio" -srcfolder "$DMGROOT" -ov -format UDZO "$OUT/KimiK3-Lite-v6-macOS.dmg"
