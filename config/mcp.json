@@ -1,38 +1,40 @@
 {
-  "version": 1,
+  "version": 2,
   "servers": [
     {
       "id": "computer",
       "name": "Computer Control MCP",
       "transport": "stdio",
-      "enabled": false,
-      "command": "",
-      "args": [],
+      "enabled": true,
+      "platforms": ["win32"],
+      "command": "@python",
+      "args": ["{root}/mcp_servers/computer_server.py"],
+      "protocol_version": "2025-06-18",
       "tools": [
+        {"name":"computer.capabilities","permission":"computer.read","description":"Read supported computer-control capabilities."},
         {"name":"computer.windows.list","permission":"computer.read","description":"List visible application windows."},
         {"name":"computer.window.focus","permission":"computer.focus","description":"Focus a known application window."},
-        {"name":"computer.ui.find","permission":"computer.read","description":"Find UI elements through accessibility metadata."},
-        {"name":"computer.ui.click","permission":"computer.input","description":"Click a confirmed UI element."},
-        {"name":"computer.ui.type","permission":"computer.input","description":"Type into a confirmed UI element."},
         {"name":"computer.app.launch","permission":"computer.launch","description":"Launch a local application."},
-        {"name":"computer.screen.capture","permission":"computer.read","description":"Capture the active screen for observation."}
+        {"name":"computer.ui.click","permission":"computer.input","description":"Click confirmed screen coordinates."},
+        {"name":"computer.ui.type","permission":"computer.input","description":"Type text into the focused control."}
       ]
     },
     {
       "id": "autocad",
       "name": "AutoCAD MCP Bridge",
       "transport": "stdio",
-      "enabled": false,
-      "command": "",
-      "args": [],
+      "enabled": true,
+      "platforms": ["win32"],
+      "command": "@python",
+      "args": ["{root}/mcp_servers/autocad_server.py"],
+      "protocol_version": "2025-06-18",
       "tools": [
-        {"name":"autocad.document.get","permission":"computer.read","description":"Read current AutoCAD document metadata."},
+        {"name":"autocad.status","permission":"computer.read","description":"Check whether an AutoCAD COM session is available."},
+        {"name":"autocad.document.get","permission":"computer.read","description":"Read active drawing metadata."},
         {"name":"autocad.layers.list","permission":"computer.read","description":"List drawing layers."},
-        {"name":"autocad.selection.get","permission":"computer.read","description":"Read current selection."},
+        {"name":"autocad.layer.create","permission":"computer.input","description":"Create a drawing layer."},
         {"name":"autocad.entity.create","permission":"computer.input","description":"Create a structured drawing entity."},
-        {"name":"autocad.entity.modify","permission":"computer.input","description":"Modify a selected drawing entity."},
-        {"name":"autocad.document.save","permission":"filesystem.write","description":"Save the current drawing."},
-        {"name":"autocad.export.pdf","permission":"filesystem.write","description":"Export the drawing to PDF."}
+        {"name":"autocad.document.save","permission":"filesystem.write","description":"Save the active drawing."}
       ]
     }
   ]
