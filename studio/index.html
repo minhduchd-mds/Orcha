@@ -1,165 +1,20 @@
 <!doctype html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="dark light">
-  <title>KimiK3 Lite · Local Agent Studio</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script defer src="/app.js"></script>
-</head>
-<body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">K</div>
-      <div><strong>KimiK3 Lite</strong><small>Local Agent Studio · v6.1</small></div>
-    </div>
-
-    <nav class="primary-nav" aria-label="Điều hướng chính">
-      <button class="nav-item active" data-view="chat"><span>◉</span><b>Trò chuyện</b></button>
-      <button class="nav-item" data-view="work"><span>◇</span><b>Công việc</b></button>
-    </nav>
-
-    <div class="sidebar-group">
-      <div class="group-label">Workspace</div>
-      <button class="quiet-action" id="indexSide">＋ Thêm project / tài liệu</button>
-      <button class="quiet-action" id="modelSide">◫ Model local</button>
-    </div>
-
-    <div class="runtime-card">
-      <div class="runtime-line"><span id="runtimeDot" class="status-dot"></span><span id="runtimeText">Đang kiểm tra…</span></div>
-      <small id="runtimeMeta">Local only</small>
-    </div>
-  </aside>
-
-  <main class="main-stage">
-    <header class="topbar">
-      <div>
-        <h1 id="pageTitle">Trò chuyện</h1>
-        <p id="pageSubtitle">Hỏi, phân tích và thực hiện công việc với dữ liệu trên máy.</p>
-      </div>
-      <div class="top-actions">
-        <button class="pill" id="contextPill" title="Mở Context Inspector">Context · 1M virtual</button>
-        <select class="pill select" id="reasoningMode" aria-label="Mức suy luận">
-          <option value="auto">Auto</option>
-          <option value="fast">Nhanh</option>
-          <option value="smart">Cân bằng</option>
-          <option value="deep">Sâu</option>
-        </select>
-      </div>
-    </header>
-
-    <section class="view active chat-view" id="chatView">
-      <div class="conversation" id="conversation">
-        <section class="welcome" id="welcome">
-          <div class="welcome-orb">✦</div>
-          <h2>Anh muốn Kimi làm gì?</h2>
-          <p>Chat bình thường hoặc bật Agent để Kimi chọn Skill, đọc project và lập kế hoạch dùng công cụ.</p>
-          <div class="starter-grid">
-            <button data-prompt="Phân tích kiến trúc project đang index và xếp hạng các rủi ro quan trọng.">Phân tích project <span>→</span></button>
-            <button data-prompt="Review code hiện tại, tìm lỗi bảo mật và đề xuất regression test.">Review mã nguồn <span>→</span></button>
-            <button data-prompt="Đánh giá UI/UX hiện tại và ưu tiên các vấn đề P0, P1, P2.">Audit UI/UX <span>→</span></button>
-            <button data-prompt="Cho tôi biết các MCP tool và Skill hiện có, quyền nào cần xác nhận.">Kiểm tra Agent tools <span>→</span></button>
-          </div>
-        </section>
-      </div>
-
-      <div class="composer-wrap">
-        <div class="composer">
-          <textarea id="promptInput" rows="2" placeholder="Nhập yêu cầu…  Enter để gửi · Shift+Enter xuống dòng"></textarea>
-          <div class="composer-toolbar">
-            <button class="icon-action" id="attachProject" title="Index project">＋</button>
-            <button class="mode-toggle active" id="agentToggle" aria-pressed="true"><span class="agent-dot"></span> Agent</button>
-            <div class="selected-skill" id="selectedSkill">Tự chọn Skill</div>
-            <button class="send-button" id="sendButton" aria-label="Gửi">↑</button>
-          </div>
-        </div>
-        <div class="privacy-note">Dữ liệu, memory và tool execution được xử lý local. Hành động thay đổi hệ thống cần quyền.</div>
-      </div>
-    </section>
-
-    <section class="view work-view" id="workView">
-      <div class="work-heading">
-        <div><span class="eyebrow">WORKFLOW</span><h2>Công việc</h2><p>Chạy công việc nhiều bước tuần tự để giữ RAM thấp và dễ kiểm soát.</p></div>
-        <button class="secondary-button" id="refreshWorkflows">↻ Làm mới</button>
-      </div>
-      <div class="work-layout">
-        <aside class="workflow-list card"><div class="card-title">Workflow</div><div id="workflowList"></div></aside>
-        <div class="workflow-detail card">
-          <div class="workflow-title-row"><div><h3 id="workflowTitle">Chọn một workflow</h3><p id="workflowDescription">Mỗi bước dùng chung model local, chạy tuần tự.</p></div></div>
-          <label class="field-label" for="workflowGoal">Mục tiêu</label>
-          <textarea class="goal-input" id="workflowGoal" placeholder="Ví dụ: Phân tích repo hiện tại và lập kế hoạch nâng cấp trong 3 giai đoạn."></textarea>
-          <div class="workflow-actions"><button class="primary-button" id="runWorkflow">Chạy workflow</button></div>
-          <div class="workflow-run" id="workflowRun"></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <aside class="inspector" id="inspector">
-    <div class="inspector-header"><div><span class="eyebrow">INSPECTOR</span><h2>Local intelligence</h2></div><button id="refreshInspector" class="ghost-icon" title="Làm mới">↻</button></div>
-
-    <details class="inspector-section" open>
-      <summary><span>Context window</span><strong id="contextHeadline">0 / 1M</strong></summary>
-      <div class="meter"><i id="contextMeter"></i></div>
-      <div class="context-breakdown" id="contextRows"></div>
-      <div class="mini-stats">
-        <div><span>Working set</span><b id="workingContext">0 / 4K</b></div>
-        <div><span>Native model</span><b id="nativeContext">40K</b></div>
-      </div>
-      <p class="section-note">Virtual Context là kho có thể truy xuất; Working Set mới là phần được nạp vào model ở từng lượt.</p>
-    </details>
-
-    <details class="inspector-section" open>
-      <summary><span>Intelligence</span><strong id="kiiScore">—</strong></summary>
-      <div class="kii-layout"><div class="score-ring" id="scoreRing"><b id="scoreNumber">—</b></div><div><strong>KII operational</strong><p>Đo chất lượng vận hành, không phải IQ.</p></div></div>
-      <div class="metric-list" id="intelligenceMetrics"></div>
-    </details>
-
-    <details class="inspector-section" open>
-      <summary><span>Agent</span><strong id="agentState">Sẵn sàng</strong></summary>
-      <div class="agent-card" id="agentCard"><p class="muted">Bật Agent để tự chọn Skill và lập kế hoạch.</p></div>
-      <div class="plan-list" id="planList"></div>
-    </details>
-
-    <details class="inspector-section">
-      <summary><span>Skills</span><strong id="skillCount">0</strong></summary>
-      <div class="compact-list" id="skillList"></div>
-    </details>
-
-    <details class="inspector-section">
-      <summary><span>MCP connections</span><strong id="mcpCount">0</strong></summary>
-      <div class="connection-actions"><button class="tiny-button" id="probeMcp">Kiểm tra kết nối</button></div>
-      <div class="compact-list" id="mcpServers"></div>
-      <div class="tool-list" id="mcpTools"></div>
-    </details>
-
-    <details class="inspector-section" open>
-      <summary><span>Nguồn</span><strong id="sourceCount">0</strong></summary>
-      <div class="source-list" id="sourceList"><p class="muted">Chưa có nguồn được dùng.</p></div>
-    </details>
-  </aside>
-</div>
-
-<dialog id="modelDialog">
-  <div class="dialog-head"><div><span class="eyebrow">LOCAL MODEL</span><h2>Thiết lập model</h2><p>Model weights do Ollama quản lý và không nằm trong repo.</p></div><button class="dialog-close" data-close="modelDialog">×</button></div>
-  <div class="dialog-body">
-    <label class="field-label">Profile</label>
-    <select id="profileSelect" class="full-input"><option value="max">MAX · ~241 MB</option><option value="balanced" selected>Balanced · ~522 MB</option><option value="quality">Quality · ~1.4 GB</option></select>
-    <button class="primary-button full-button" id="installModel">Cài / sửa model</button>
-    <p id="installStatus" class="muted"></p><div class="progress"><i id="installProgress"></i></div>
-  </div>
-</dialog>
-
-<dialog id="indexDialog">
-  <div class="dialog-head"><div><span class="eyebrow">KNOWLEDGE</span><h2>Thêm project / tài liệu</h2><p>Kimi chỉ index file text/code phù hợp; bỏ qua build, .git và secret phổ biến.</p></div><button class="dialog-close" data-close="indexDialog">×</button></div>
-  <div class="dialog-body"><div class="path-row"><input class="full-input" id="indexPath" placeholder="Đường dẫn thư mục"><button class="secondary-button" id="pickFolder">Chọn…</button></div><button class="primary-button full-button" id="startIndex">Index ngay</button><p id="indexStatus" class="muted"></p></div>
-</dialog>
-
-<dialog id="permissionDialog">
-  <div class="dialog-head"><div><span class="eyebrow warning">PERMISSION</span><h2>Kimi cần quyền thực hiện</h2><p>Hành động này có thể thay đổi trạng thái trên máy.</p></div><button class="dialog-close" data-close="permissionDialog">×</button></div>
-  <div class="dialog-body"><div class="permission-tool" id="permissionTool"></div><div class="permission-actions"><button class="secondary-button" id="denyPermission">Từ chối</button><button class="secondary-button" id="allowSession">Cho phép phiên này</button></div></div>
-</dialog>
-</body>
-</html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>KimiK3 Lite · Local Agent Studio</title><link rel="stylesheet" href="/styles.css"><script defer src="/app.js"></script></head>
+<body><div class="app-shell">
+<aside class="sidebar"><div class="brand"><div class="brand-mark">K</div><div><strong>KimiK3 Lite</strong><small>Local Agent Studio · v6.2</small></div></div><nav class="primary-nav"><button class="nav-item active" data-view="chat"><span>◉</span><b>Trò chuyện</b></button><button class="nav-item" data-view="work"><span>◇</span><b>Công việc</b></button></nav><div class="sidebar-group"><div class="group-label">Workspace</div><button class="quiet-action" id="indexSide">＋ Thêm project / tài liệu</button><button class="quiet-action" id="newSkill">⚡ Tạo Skill</button><button class="quiet-action" id="modelSide">◫ Model local</button></div><div class="runtime-card"><div class="runtime-line"><span id="runtimeDot" class="status-dot"></span><span id="runtimeText">Đang kiểm tra…</span></div><small id="runtimeMeta">Local only</small></div></aside>
+<main class="main-stage"><header class="topbar"><div><h1 id="pageTitle">Trò chuyện</h1><p id="pageSubtitle">Hỏi, phân tích và thực hiện công việc với dữ liệu trên máy.</p></div><div class="top-actions"><button class="pill" id="runBenchmark">KII Benchmark</button><button class="pill" id="contextPill">Context · 1M virtual</button><select class="pill select" id="reasoningMode"><option value="auto">Auto</option><option value="fast">Nhanh</option><option value="smart">Cân bằng</option><option value="deep">Sâu</option></select></div></header>
+<section class="view active chat-view" id="chatView"><div class="conversation" id="conversation"><section class="welcome" id="welcome"><div class="welcome-orb">✦</div><h2>Anh muốn Kimi làm gì?</h2><p>Agent có thể chọn Skill, đọc project, gọi MCP tool và dừng xin quyền trước hành động thay đổi máy.</p><div class="starter-grid"><button data-prompt="Phân tích kiến trúc project đang index và xếp hạng các rủi ro quan trọng.">Phân tích project <span>→</span></button><button data-prompt="Review code hiện tại, tìm lỗi bảo mật và đề xuất regression test.">Review mã nguồn <span>→</span></button><button data-prompt="Đánh giá UI/UX hiện tại và ưu tiên các vấn đề P0, P1, P2.">Audit UI/UX <span>→</span></button><button data-prompt="Liệt kê cửa sổ đang mở trên máy và cho biết có thể điều khiển gì.">Computer Agent <span>→</span></button></div></section></div><div class="composer-wrap"><div class="composer"><textarea id="promptInput" rows="2" placeholder="Nhập yêu cầu…  Enter để gửi · Shift+Enter xuống dòng"></textarea><div class="composer-toolbar"><button class="icon-action" id="attachProject">＋</button><button class="mode-toggle active" id="agentToggle"><span class="agent-dot"></span> Agent</button><div class="selected-skill" id="selectedSkill">Tự chọn Skill</div><button class="send-button" id="sendButton">↑</button></div></div><div class="privacy-note">Local-first · Tool vàng cần xác nhận · Tool đỏ bị chặn theo policy.</div></div></section>
+<section class="view work-view" id="workView"><div class="work-heading"><div><span class="eyebrow">WORKFLOW</span><h2>Công việc</h2><p>Chạy công việc nhiều bước tuần tự để giữ RAM thấp và dễ kiểm soát.</p></div><button class="secondary-button" id="refreshWorkflows">↻ Làm mới</button></div><div class="work-layout"><aside class="workflow-list card"><div class="card-title">Workflow</div><div id="workflowList"></div></aside><div class="workflow-detail card"><h3 id="workflowTitle">Chọn một workflow</h3><p id="workflowDescription">Mỗi bước dùng chung model local.</p><label class="field-label">Mục tiêu</label><textarea class="goal-input" id="workflowGoal"></textarea><div class="workflow-actions"><button class="primary-button" id="runWorkflow">Chạy workflow</button></div><div class="workflow-run" id="workflowRun"></div></div></div></section></main>
+<aside class="inspector" id="inspector"><div class="inspector-header"><div><span class="eyebrow">INSPECTOR</span><h2>Local intelligence</h2></div><button id="refreshInspector" class="ghost-icon">↻</button></div>
+<details class="inspector-section" open><summary><span>Context window</span><strong id="contextHeadline">0 / 1M</strong></summary><div class="meter"><i id="contextMeter"></i></div><div id="contextRows" class="context-breakdown"></div><div class="mini-stats"><div><span>Working set</span><b id="workingContext">0 / 4K</b></div><div><span>Native model</span><b id="nativeContext">40K</b></div></div><p class="section-note">Virtual Context là kho truy xuất; Working Set mới được nạp vào model.</p></details>
+<details class="inspector-section" open><summary><span>Intelligence</span><strong id="kiiScore">—</strong></summary><div class="kii-layout"><div class="score-ring" id="scoreRing"><b id="scoreNumber">—</b></div><div><strong>KII operational</strong><p id="benchmarkLabel">Chưa benchmark</p></div></div><div id="intelligenceMetrics" class="metric-list"></div><div id="benchmarkMetrics" class="metric-list"></div></details>
+<details class="inspector-section" open><summary><span>Agent</span><strong id="agentState">Sẵn sàng</strong></summary><div id="agentCard" class="agent-card"><p class="muted">Bật Agent để tự chọn Skill và tool.</p></div><div id="planList" class="plan-list"></div></details>
+<details class="inspector-section" open><summary><span>Action timeline</span><strong id="actionCount">0</strong></summary><div id="actionList" class="compact-list"><p class="muted">Chưa có hành động.</p></div></details>
+<details class="inspector-section"><summary><span>Skills</span><strong id="skillCount">0</strong></summary><div id="skillList" class="compact-list"></div></details>
+<details class="inspector-section"><summary><span>MCP connections</span><strong id="mcpCount">0</strong></summary><div class="connection-actions"><button class="tiny-button" id="probeMcp">Kiểm tra kết nối</button></div><div id="mcpServers" class="compact-list"></div><div id="mcpTools" class="tool-list"></div></details>
+<details class="inspector-section" open><summary><span>Nguồn</span><strong id="sourceCount">0</strong></summary><div id="sourceList" class="source-list"><p class="muted">Chưa có nguồn.</p></div></details></aside></div>
+<dialog id="modelDialog"><div class="dialog-head"><div><span class="eyebrow">LOCAL MODEL</span><h2>Thiết lập model</h2><p>Weights do Ollama quản lý.</p></div><button class="dialog-close" data-close="modelDialog">×</button></div><div class="dialog-body"><label class="field-label">Profile</label><select id="profileSelect" class="full-input"><option value="max">MAX · ~241 MB</option><option value="balanced" selected>Balanced · ~522 MB</option><option value="quality">Quality · ~1.4 GB</option></select><button class="primary-button full-button" id="installModel">Cài / sửa model</button><p id="installStatus" class="muted"></p><div class="progress"><i id="installProgress"></i></div></div></dialog>
+<dialog id="indexDialog"><div class="dialog-head"><div><span class="eyebrow">KNOWLEDGE</span><h2>Thêm project / tài liệu</h2><p>Index code/text local, bỏ qua build và secret phổ biến.</p></div><button class="dialog-close" data-close="indexDialog">×</button></div><div class="dialog-body"><div class="path-row"><input class="full-input" id="indexPath" placeholder="Đường dẫn thư mục"><button class="secondary-button" id="pickFolder">Chọn…</button></div><button class="primary-button full-button" id="startIndex">Index ngay</button><p id="indexStatus" class="muted"></p></div></dialog>
+<dialog id="permissionDialog"><div class="dialog-head"><div><span class="eyebrow warning">PERMISSION</span><h2>Kimi cần quyền thực hiện</h2><p>Hành động này có thể thay đổi trạng thái trên máy.</p></div><button class="dialog-close" data-close="permissionDialog">×</button></div><div class="dialog-body"><div id="permissionTool" class="permission-tool"></div><div class="permission-actions"><button class="secondary-button" id="denyPermission">Từ chối</button><button class="secondary-button" id="allowOnce">Cho phép lần này</button><button class="primary-button" id="allowSession">Cho phép phiên này</button></div></div></dialog>
+<dialog id="skillDialog"><div class="dialog-head"><div><span class="eyebrow">SKILL BUILDER</span><h2>Tạo kỹ năng local</h2><p>Skill là SOP + trigger + permission, không chứa executable.</p></div><button class="dialog-close" data-close="skillDialog">×</button></div><div class="dialog-body"><label class="field-label">Skill ID</label><input id="skillId" class="full-input" placeholder="autocad-drafting"><label class="field-label">Tên</label><input id="skillName" class="full-input" placeholder="AutoCAD Drafting"><label class="field-label">Mô tả</label><textarea id="skillDescription" class="goal-input" placeholder="Mục tiêu của skill"></textarea><label class="field-label">Trigger, mỗi dòng một mục</label><textarea id="skillTriggers" class="goal-input" placeholder="vẽ autocad&#10;bản vẽ cad"></textarea><label class="field-label">Workflow, mỗi dòng một bước</label><textarea id="skillWorkflow" class="goal-input" placeholder="Đọc trạng thái&#10;Lập kế hoạch&#10;Thực hiện&#10;Kiểm tra"></textarea><button id="saveSkill" class="primary-button full-button">Lưu Skill</button><p id="skillStatus" class="muted"></p></div></dialog>
+</body></html>

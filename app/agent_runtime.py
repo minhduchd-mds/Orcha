@@ -1,112 +1,114 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, time, uuid
+import json, re, time, uuid
 from typing import Any
 
+import action_log as audit
 import kimik3_lite as core
 import mcp_gateway as mcp
-import permission_engine as perms
 import skill_runtime as skills
 
+RUNS:dict[str,dict]={}
+MAX_ACTIONS=6
 
-def _suggest_tools(skill: dict|None, query: str, session_id: str='default') -> list[dict]:
-    catalog=mcp.list_tools(session_id, (skill or {}).get('permissions'))
-    by_name={x['name']:x for x in catalog}
-    names=['context.stats']
-    sid=(skill or {}).get('id','')
-    if sid in {'code-review','ux-audit','project-analysis'}:
-        names.insert(0,'project.search')
-    if sid=='computer-control':
-        names += ['computer.windows.list','computer.ui.find','computer.ui.click','computer.ui.type','computer.app.launch']
-    low=query.casefold()
-    if 'autocad' in low or 'cad' in low:
-        names += ['autocad.document.get','autocad.layers.list','autocad.entity.create','autocad.document.save']
-    seen=set(); out=[]
+def _suggest_tools(skill:dict|None,query:str,session_id:str='default')->list[dict]:
+    catalog=mcp.list_tools(session_id,(skill or {}).get('permissions'));by={x['name']:x for x in catalog};names=['context.stats'];sid=(skill or {}).get('id','');low=query.casefold()
+    if sid in {'code-review','ux-audit','project-analysis'}:names.insert(0,'project.search')
+    if sid=='computer-control' or any(k in low for k in ['máy tính','may tinh','mở ứng dụng','mo ung dung','click','nhập text','nhap text']):names+=['computer.windows.list','computer.ui.find','computer.window.focus','computer.app.launch','computer.ui.click','computer.ui.type']
+    if 'autocad' in low or re.search(r'\bcad\b',low):names+=['autocad.status','autocad.document.get','autocad.layers.list','autocad.layer.create','autocad.entity.create','autocad.dimension.create','autocad.entity.delete','autocad.document.save']
+    out=[];seen=set()
     for n in names:
-        if n in seen: continue
-        seen.add(n)
-        if n in by_name: out.append(by_name[n])
+        if n not in seen and n in by:out.append(by[n]);seen.add(n)
     return out
 
+def preview(query:str,session_id:str='default')->dict:
+    skill=skills.match_skill(query);compact=skills.compact_skill(skill);workflow=(skill or {}).get('workflow') or ['Hiểu yêu cầu','Thu thập context liên quan','Thực hiện bằng công cụ phù hợp','Kiểm tra kết quả'];tools=_suggest_tools(skill,query,session_id)
+    return {'id':'plan-'+uuid.uuid4().hex[:10],'query':query,'skill':compact,'steps':[{'index':i+1,'name':x,'status':'pending'} for i,x in enumerate(workflow[:12])],'tools':tools,'permission_summary':{'green':sum(x.get('risk')=='green' for x in tools),'yellow':sum(x.get('risk')=='yellow' for x in tools),'red':sum(x.get('risk')=='red' for x in tools)},'execution':'permission_gated'}
 
-def preview(query: str, session_id: str='default') -> dict:
-    skill=skills.match_skill(query)
-    compact=skills.compact_skill(skill)
-    workflow=(skill or {}).get('workflow') or ['Hiểu yêu cầu','Thu thập context liên quan','Giải quyết nhiệm vụ','Kiểm tra kết quả']
-    tools=_suggest_tools(skill,query,session_id)
-    return {
-        'id':'plan-'+uuid.uuid4().hex[:10],
-        'query':query,
-        'skill':compact,
-        'steps':[{'index':i+1,'name':step,'status':'pending'} for i,step in enumerate(workflow[:12])],
-        'tools':tools,
-        'permission_summary':{
-            'green':sum(1 for x in tools if x.get('risk')=='green'),
-            'yellow':sum(1 for x in tools if x.get('risk')=='yellow'),
-            'red':sum(1 for x in tools if x.get('risk')=='red'),
-        },
-        'execution':'read_only_until_confirmed',
-    }
+def _json_obj(text:str)->Any:
+    text=text.strip();m=re.search(r'```(?:json)?\s*(.*?)```',text,re.S|re.I)
+    if m:text=m.group(1).strip()
+    starts=[i for i in [text.find('['),text.find('{')] if i>=0]
+    if starts:text=text[min(starts):]
+    for end in range(len(text),0,-1):
+        try:return json.loads(text[:end])
+        except Exception:pass
+    return None
 
+def _fallback_actions(plan:dict)->list[dict]:
+    out=[]
+    for t in plan.get('tools',[]):
+        n=t.get('name')
+        if n=='project.search':out.append({'tool':n,'arguments':{'query':plan['query'],'top_k':6},'reason':'Tìm context project'})
+        elif n in {'context.stats','computer.windows.list','autocad.status','autocad.document.get','autocad.layers.list'}:out.append({'tool':n,'arguments':{},'reason':'Thu thập trạng thái'})
+    return out[:MAX_ACTIONS]
 
-def _read_observations(plan: dict, session_id: str) -> list[dict]:
-    obs=[]
-    for tool in plan.get('tools',[]):
-        if tool.get('decision')!='auto':
-            continue
-        name=tool.get('name')
-        if name=='project.search':
-            r=mcp.call_tool(name,{'query':plan['query'],'top_k':6},session_id,(plan.get('skill') or {}).get('permissions'))
-        elif name=='context.stats':
-            r=mcp.call_tool(name,{},session_id,(plan.get('skill') or {}).get('permissions'))
-        else:
-            continue
-        obs.append(r)
-    return obs
+def _propose_actions(plan:dict,profile:str,model:str|None,host:str)->list[dict]:
+    tools=plan.get('tools',[])
+    if not tools:return []
+    catalog=[{'name':x.get('name'),'description':x.get('description'),'decision':x.get('decision')} for x in tools]
+    prompt='''Bạn là tool planner local. Trả DUY NHẤT JSON array, tối đa 6 phần tử: [{"tool":"tool.name","arguments":{},"reason":"..."}]. Chỉ dùng tool trong CATALOG. Không bịa tool. Nếu thiếu tham số để thao tác ghi/click thì không gọi tool đó; ưu tiên tool đọc để quan sát trước.\nCATALOG='''+json.dumps(catalog,ensure_ascii=False)+'\nYÊU CẦU='+plan['query']
+    try:
+        cfg=core.profile_config(profile);raw=core.ollama_chat(model or cfg.get('ollama_name'),[{'role':'user','content':prompt}],host,120,.05,min(int(cfg.get('working_context',4096)),4096));obj=_json_obj(raw)
+        if isinstance(obj,dict):obj=obj.get('actions') or []
+        allowed={x.get('name') for x in tools};out=[]
+        for x in obj if isinstance(obj,list) else []:
+            if not isinstance(x,dict) or x.get('tool') not in allowed:continue
+            out.append({'tool':str(x['tool']),'arguments':x.get('arguments') if isinstance(x.get('arguments'),dict) else {},'reason':str(x.get('reason') or '')[:300]})
+        return out[:MAX_ACTIONS] or _fallback_actions(plan)
+    except Exception:return _fallback_actions(plan)
 
+def _redact(name:str,args:dict)->dict:
+    if name=='computer.ui.type':return {'element_id':args.get('element_id'),'characters':len(str(args.get('text') or '')),'redacted':True}
+    return {str(k):v for k,v in list(args.items())[:20] if str(k).lower() not in {'password','token','secret','api_key'}}
 
-def run(query: str, profile: str='balanced', model: str|None=None, host: str='http://127.0.0.1:11434', mode: str='auto', session_id: str='default') -> dict:
-    started=time.time(); plan=preview(query,session_id); observations=_read_observations(plan,session_id)
-    skill=plan.get('skill') or {}
-    skill_prompt=''
-    if skill:
-        skill_prompt=(
-            f"\nSKILL ĐƯỢC CHỌN: {skill.get('name')} ({skill.get('id')})\n"
-            f"Workflow: {json.dumps(skill.get('workflow',[]),ensure_ascii=False)}\n"
-            f"Rules: {json.dumps(skill.get('rules',[]),ensure_ascii=False)}\n"
-            f"Verification: {json.dumps(skill.get('verification',[]),ensure_ascii=False)}\n"
-        )
-    obs_text='\n'.join(
-        f"TOOL {x.get('tool')}: {json.dumps(x.get('result'),ensure_ascii=False)[:5000]}" for x in observations if x.get('ok')
-    )
-    prompt=(
-        "Bạn đang chạy trong KimiK3 Local Agent Runtime. Chỉ coi tool observation là dữ liệu đã thực thi. "
-        "Các tool có decision=confirm hoặc deny CHƯA được thực thi; không được tuyên bố đã làm."
-        + skill_prompt
-        + f"\nREAD-ONLY OBSERVATIONS:\n{obs_text or '(không có)'}\n\nYÊU CẦU NGƯỜI DÙNG:\n{query}"
-    )
-    result=core.answer_query(prompt,profile,model,host,mode,6,300,session_id=session_id)
-    pending=[x for x in plan.get('tools',[]) if x.get('decision')=='confirm']
-    denied=[x for x in plan.get('tools',[]) if x.get('decision')=='deny']
-    return {
-        **result,
-        'agent':{
-            'plan':plan,
-            'observations':observations,
-            'pending_confirmations':pending,
-            'denied_tools':denied,
-            'elapsed_ms':round((time.time()-started)*1000),
-        }
-    }
+def _rollback_for(name:str,result:dict)->dict|None:
+    if name in {'autocad.entity.create','autocad.dimension.create'} and isinstance(result.get('result'),dict):
+        h=result['result'].get('handle')
+        if h:return {'tool':'autocad.entity.delete','arguments':{'handle':h}}
+    return None
 
+def _execute(run:dict)->dict:
+    plan=run['plan'];skill_perm=(plan.get('skill') or {}).get('permissions');sid=run['session_id'];observations=run.setdefault('observations',[]);pending=[];denied=[]
+    while run['cursor']<len(run['actions']):
+        action=run['actions'][run['cursor']];name=action['tool'];tool=next((x for x in mcp.list_tools(sid,skill_perm) if x.get('name')==name),None)
+        if not tool:run['cursor']+=1;continue
+        if tool.get('decision')=='deny':
+            denied.append(tool);audit.record('tool_denied',sid,run_id=run['id'],tool=name,status='denied');run['cursor']+=1;continue
+        if tool.get('decision')=='confirm':
+            pending.append({**tool,'arguments':_redact(name,action.get('arguments') or {}),'reason':action.get('reason'),'action_index':run['cursor']});audit.record('permission_required',sid,run_id=run['id'],tool=name,permission=tool.get('permission'),status='waiting');break
+        audit.record('tool_start',sid,run_id=run['id'],tool=name,arguments=_redact(name,action.get('arguments') or {}),status='running')
+        r=mcp.call_tool(name,action.get('arguments') or {},sid,skill_perm);rb=_rollback_for(name,r);event=audit.record('tool_result',sid,run_id=run['id'],tool=name,arguments=_redact(name,action.get('arguments') or {}),status='done' if r.get('ok') else r.get('status','error'),ok=bool(r.get('ok')),rollback=rb,result_summary=str(r.get('result') or r.get('error') or '')[:1000]);r['action_id']=event['id'];r['rollback']=rb;observations.append(r);run['cursor']+=1
+        if not r.get('ok'):break
+    run['pending_confirmations']=pending;run['denied_tools']=denied;return run
 
-def self_test() -> None:
-    p=preview('Hãy review code và tìm lỗi bảo mật')
-    assert (p.get('skill') or {}).get('id')=='code-review'
-    assert any(x.get('name')=='project.search' for x in p['tools'])
-    c=preview('Mở ứng dụng và điều khiển máy tính')
-    assert (c.get('skill') or {}).get('id')=='computer-control'
-    print('PASS: agent runtime')
+def _finish(run:dict)->dict:
+    sid=run['session_id'];plan=run['plan'];obs=run.get('observations',[]);skill=plan.get('skill') or {};obs_text='\n'.join(f"TOOL {x.get('tool')}: {json.dumps(x.get('result') or x.get('error'),ensure_ascii=False)[:5000]}" for x in obs)
+    skill_text=f"Skill: {skill.get('name')}\nRules: {json.dumps(skill.get('rules',[]),ensure_ascii=False)}\nVerification: {json.dumps(skill.get('verification',[]),ensure_ascii=False)}" if skill else ''
+    prompt='Bạn là KimiK3 Local Agent. Chỉ tuyên bố hành động đã thực hiện nếu có TOOL observation thành công. '+skill_text+f"\nOBSERVATIONS:\n{obs_text or '(không có)'}\n\nYÊU CẦU:\n{run['query']}"
+    result=core.answer_query(prompt,run['profile'],run['model'],run['host'],run['mode'],6,300,session_id=sid);run['status']='done';audit.record('agent_done',sid,run_id=run['id'],status='done',actions=len(run['actions']),observations=len(obs));return {**result,'agent':_public(run)}
 
+def _public(run:dict)->dict:
+    return {'run_id':run['id'],'status':run.get('status'),'plan':run['plan'],'actions':run.get('actions',[]),'cursor':run.get('cursor',0),'observations':run.get('observations',[]),'pending_confirmations':run.get('pending_confirmations',[]),'denied_tools':run.get('denied_tools',[]),'elapsed_ms':round((time.time()-run['started'])*1000)}
 
-if __name__=='__main__': self_test()
+def run(query:str,profile:str='balanced',model:str|None=None,host:str='http://127.0.0.1:11434',mode:str='auto',session_id:str='default')->dict:
+    plan=preview(query,session_id);rid='run-'+uuid.uuid4().hex[:12];obj={'id':rid,'query':query,'profile':profile,'model':model,'host':host,'mode':mode,'session_id':session_id,'started':time.time(),'plan':plan,'actions':_propose_actions(plan,profile,model,host),'cursor':0,'status':'running'};RUNS[rid]=obj;audit.record('agent_start',session_id,run_id=rid,status='running',skill=(plan.get('skill') or {}).get('id'),query=query[:1000]);_execute(obj)
+    if obj.get('pending_confirmations'):
+        obj['status']='waiting_permission';return {'answer':'Kimi đã chuẩn bị hành động tiếp theo và đang chờ quyền xác nhận.','sources':[],'intelligence':None,'context':core.context_status(profile,session_id),'agent':_public(obj)}
+    return _finish(obj)
+
+def continue_run(run_id:str)->dict:
+    obj=RUNS.get(run_id)
+    if not obj:raise KeyError('Agent run không còn trong bộ nhớ phiên')
+    obj['status']='running';obj['pending_confirmations']=[];_execute(obj)
+    if obj.get('pending_confirmations'):
+        obj['status']='waiting_permission';return {'answer':'Còn hành động cần xác nhận.','sources':[],'intelligence':None,'context':core.context_status(obj['profile'],obj['session_id']),'agent':_public(obj)}
+    return _finish(obj)
+
+def get_run(run_id:str)->dict|None:
+    x=RUNS.get(run_id);return _public(x) if x else None
+
+def self_test():
+    p=preview('Hãy review code và tìm lỗi bảo mật');assert (p.get('skill') or {}).get('id')=='code-review';assert any(x.get('name')=='project.search' for x in p['tools']);c=preview('Mở ứng dụng và điều khiển máy tính');assert (c.get('skill') or {}).get('id')=='computer-control';print('PASS: agent runtime')
+
+if __name__=='__main__':self_test()
