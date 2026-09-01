@@ -22,15 +22,18 @@ jobs:
       - name: Verify Windows source
         shell: pwsh
         run: |
-          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python app/kimik3_lite.py --self-test
           python app/skill_runtime.py
+          python app/skill_builder.py
           python app/permission_engine.py
           python app/mcp_transport.py
           python app/mcp_gateway.py
           python app/agent_runtime.py
+          python app/action_log.py
+          python app/benchmark_engine.py
           node --check studio/app.js
-          python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=5,r;print('PASS: Computer MCP handshake')"
+          python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: Computer MCP element handshake')"
       - name: Package Windows portable
         if: github.event_name != 'pull_request'
         shell: pwsh
@@ -54,13 +57,16 @@ jobs:
           python-version: '3.12'
       - name: Verify macOS source
         run: |
-          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
           python3 app/kimik3_lite.py --self-test
           python3 app/skill_runtime.py
+          python3 app/skill_builder.py
           python3 app/permission_engine.py
           python3 app/mcp_transport.py
           python3 app/mcp_gateway.py
           python3 app/agent_runtime.py
+          python3 app/action_log.py
+          python3 app/benchmark_engine.py
           node --check studio/app.js
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
