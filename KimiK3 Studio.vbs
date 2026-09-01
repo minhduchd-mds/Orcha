@@ -4,7 +4,6 @@ Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 root = fso.GetParentFolderName(WScript.ScriptFullName)
 url = "http://127.0.0.1:11435/"
-
 Function ServerReady()
   On Error Resume Next
   Dim r
@@ -16,9 +15,8 @@ Function ServerReady()
   Err.Clear
   On Error GoTo 0
 End Function
-
 If Not ServerReady() Then
-  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v66.py"" --profile balanced --model kimik3-lite-v3 --port 11435"""
+  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v67.py"" --profile balanced --model kimik3-lite-v3 --port 11435"""
   sh.Run cmd, 0, False
   ok = False
   For i = 1 To 40
@@ -28,17 +26,14 @@ If Not ServerReady() Then
 Else
   ok = True
 End If
-
 If Not ok Then
   MsgBox "KimiK3-Lite Studio khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python.", 16, "KimiK3-Lite"
   WScript.Quit 1
 End If
-
 edge = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
 If Not fso.FileExists(edge) Then edge = sh.ExpandEnvironmentStrings("%ProgramFiles%") & "\Microsoft\Edge\Application\msedge.exe"
 chrome = sh.ExpandEnvironmentStrings("%ProgramFiles%") & "\Google\Chrome\Application\chrome.exe"
 If Not fso.FileExists(chrome) Then chrome = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Google\Chrome\Application\chrome.exe"
-
 If fso.FileExists(edge) Then
   appCmd = """" & edge & """ --app=" & url & " --start-maximized"
   sh.Run appCmd, 1, False
