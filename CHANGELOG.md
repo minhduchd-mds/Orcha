@@ -1,5 +1,18 @@
 # Changelog
 
+## v7.1.0 — Durable Agent Team + Task Board
+
+- Nâng Agent Team theo các pattern đã nghiên cứu từ DeepSeek Harness: durable member identity, append-only Team events, mailbox và task state có thể replay.
+- Thêm `team_runtime.py` với Team event log riêng, cold view sau restart, child/member-first settle và fail-loud capability contract.
+- Task DAG có `revision` compare-and-set; mutation stale bị từ chối thay vì ghi đè im lặng.
+- Team mailbox lưu `queued` và `delivered` riêng; sender/target phải thuộc đúng Team.
+- Thêm async `/api/agents/team/start` để UI nhận `run_id/team_id` ngay và có thể poll trạng thái trong khi team đang chạy.
+- Thêm cooperative `steer/cancel` theo step boundary; không giả vờ hard-kill model request đang chạy.
+- Agent node khai báo `requires`; thiếu capability trả `UNSUPPORTED_CAPABILITY` thay vì silent degrade.
+- Runtime restart đánh dấu Team đang mở là `interrupted`; không tự resume side-effect mơ hồ.
+- Studio Agent Team có 3 tab Graph / Tasks / Inbox, hiển thị task revision, mailbox delivery và nút steer/cancel trên agent đang chạy.
+- Server/launcher/package chuyển sang `studio_server_v71.py`, Windows Portable + macOS DMG `v7.1`; CI và Fast Verifier thêm durable-team regressions.
+
 ## v7.0.0 — Event-Sourced Harness + Reliability
 
 - Nghiên cứu kiến trúc chính thức `deepseek-ai/deepseek-harness` và triển khai lại độc lập các pattern phù hợp với KimiK3-Lite; không copy source upstream.
