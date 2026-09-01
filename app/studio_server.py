@@ -4,7 +4,12 @@ import argparse, json, mimetypes, os, shutil, subprocess, sys, threading, time, 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+
+import agent_runtime as agents
 import kimik3_lite as core
+import mcp_gateway as mcp
+import permission_engine as permissions
+import skill_runtime as skills
 import workflow_engine as workflows
 
 ROOT=Path(__file__).resolve().parents[1]; STUDIO=ROOT/'studio'; CONFIG=ROOT/'config'/'profiles.json'; JOBS={}
@@ -48,7 +53,7 @@ def model_file(p): return {'max':ROOT/'Modelfile.v3.max','balanced':ROOT/'Modelf
 def setup_job(profile,host):
     jid='setup-'+uuid.uuid4().hex[:10]; JOBS[jid]={'id':jid,'status':'queued','progress':0,'profile':profile}
     def run():
-        cfg=profiles().get(profile) or profiles()['balanced']; exe=find_ollama()
+        cfg=profiles().get(profile) or profiles()['balanced']
         try:
             JOBS[jid].update(status='running',stage='Khởi động Ollama',progress=5)
             if not start_ollama(host): raise RuntimeError('Không khởi động được Ollama')
@@ -72,6 +77,8 @@ def choose_folder():
         r=tk.Tk(); r.withdraw(); v=filedialog.askdirectory(title='Chọn thư mục để KimiK3-Lite đọc'); r.destroy(); return v or ''
     except Exception: return ''
 
+def _skill_list(): return [skills.compact_skill(x) for x in skills.list_skills()]
+
 class H(BaseHTTPRequestHandler):
     def send_json(self,code,obj):
         raw=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(code); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw)
@@ -81,15 +88,18 @@ class H(BaseHTTPRequestHandler):
         rel=path.lstrip('/') or 'index.html'; p=(STUDIO/rel).resolve()
         if STUDIO.resolve() not in p.parents and p!=STUDIO.resolve(): return self.send_json(403,{'error':'forbidden'})
         if not p.exists(): return self.send_json(404,{'error':'not found'})
-        raw=p.read_bytes(); self.send_response(200); self.send_header('Content-Type',mimetypes.guess_type(str(p))[0] or 'application/octet-stream'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw)
+        raw=p.read_bytes(); self.send_response(200); self.send_header('Content-Type',mimetypes.guess_type(str(p))[0] or 'application/octet-stream'); self.send_header('Cache-Control','no-cache'); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def do_GET(self):
-        parts=urlsplit(self.path); path=parts.path; query=parse_qs(parts.query)
-        if path=='/health': return self.send_json(200,{'ok':True,'version':'6.0.0'})
+        parts=urlsplit(self.path); path=parts.path; query=parse_qs(parts.query); sid=str(query.get('session',['default'])[0])
+        if path=='/health': return self.send_json(200,{'ok':True,'version':'6.1.0','agent_runtime':True,'mcp':True})
         if path=='/api/studio/status':
-            ms=ollama_models(self.server.ollama); ps=profiles(); sid=str(query.get('session',['default'])[0])
-            return self.send_json(200,{'ollama':bool(ms),'models':ms,'profile':self.server.profile,'model':self.server.model,'model_ready':any(x.split(':')[0]==self.server.model.split(':')[0] for x in ms),'profiles':ps,'index_chunks':len(core.load_index()),'memory_items':len(core.load_memory()),'context':core.context_status(self.server.profile,sid)})
-        if path=='/api/context':
-            sid=str(query.get('session',['default'])[0]); return self.send_json(200,core.context_status(self.server.profile,sid))
+            ms=ollama_models(self.server.ollama); ps=profiles(); skill_list=_skill_list(); servers=mcp.list_servers(False); tools=mcp.list_tools(sid)
+            return self.send_json(200,{'ollama':bool(ms),'models':ms,'profile':self.server.profile,'model':self.server.model,'model_ready':any(x.split(':')[0]==self.server.model.split(':')[0] for x in ms),'profiles':ps,'index_chunks':len(core.load_index()),'memory_items':len(core.load_memory()),'context':core.context_status(self.server.profile,sid),'skill_count':len(skill_list),'mcp_server_count':len(servers),'mcp_tool_count':len(tools)})
+        if path=='/api/context': return self.send_json(200,core.context_status(self.server.profile,sid))
+        if path=='/api/skills': return self.send_json(200,_skill_list())
+        if path=='/api/mcp/servers': return self.send_json(200,mcp.list_servers(str(query.get('probe',['0'])[0]).lower() in {'1','true','yes'}))
+        if path=='/api/mcp/tools': return self.send_json(200,mcp.list_tools(sid))
+        if path=='/api/permissions': return self.send_json(200,{'policy':permissions.policy(),'grants':permissions.grants(),'session_id':sid})
         if path.startswith('/api/setup/job/'): return self.send_json(200,JOBS.get(path.rsplit('/',1)[-1],{'status':'missing'}))
         if path=='/api/workflows': return self.send_json(200,workflows.list_workflows())
         if path.startswith('/api/workflows/run/'): return self.send_json(200,workflows.get_run(path.rsplit('/',1)[-1]) or {'status':'missing'})
@@ -99,22 +109,46 @@ class H(BaseHTTPRequestHandler):
         path=urlsplit(self.path).path
         try: b=self.body()
         except Exception: return self.send_json(400,{'error':'invalid json'})
+        sid=str(b.get('session_id') or 'default')
         if path=='/api/setup/install': return self.send_json(202,setup_job(str(b.get('profile','balanced')),self.server.ollama))
         if path=='/api/setup/use-profile':
-            p=str(b.get('profile','balanced')); cfg=profiles().get(p) or profiles()['balanced']; self.server.profile=p; self.server.model=cfg['ollama_name']; return self.send_json(200,{'ok':True,'profile':p,'model':self.server.model,'context':core.context_status(p,str(b.get('session_id','default')))})
+            p=str(b.get('profile','balanced')); cfg=profiles().get(p) or profiles()['balanced']; self.server.profile=p; self.server.model=cfg['ollama_name']; return self.send_json(200,{'ok':True,'profile':p,'model':self.server.model,'context':core.context_status(p,sid)})
         if path=='/api/folder/select': return self.send_json(200,{'path':choose_folder()})
         if path=='/api/index':
-            try: f,c=core.index_target(str(b.get('path','')),bool(b.get('reset',False))); return self.send_json(200,{'ok':True,'files':f,'chunks':c,'context':core.context_status(self.server.profile,str(b.get('session_id','default')))})
+            try: f,c=core.index_target(str(b.get('path','')),bool(b.get('reset',False))); return self.send_json(200,{'ok':True,'files':f,'chunks':c,'context':core.context_status(self.server.profile,sid)})
             except Exception as e: return self.send_json(400,{'error':str(e)})
         if path=='/api/memory': core.remember(str(b.get('text','')),str(b.get('category','fact'))); return self.send_json(200,{'ok':True,'items':core.load_memory()})
         if path=='/api/memory/clear': core.clear_memory(); return self.send_json(200,{'ok':True})
+        if path=='/api/agent/preview':
+            q=str(b.get('message') or b.get('query') or '').strip()
+            if not q: return self.send_json(400,{'error':'Thiếu yêu cầu'})
+            return self.send_json(200,agents.preview(q,sid))
+        if path=='/api/agent/run':
+            q=str(b.get('message') or b.get('query') or '').strip()
+            if not q: return self.send_json(400,{'error':'Thiếu yêu cầu'})
+            try: return self.send_json(200,agents.run(q,self.server.profile,self.server.model,self.server.ollama,str(b.get('mode','auto')),sid))
+            except Exception as e: return self.send_json(502,{'error':str(e)})
+        if path=='/api/permissions/grant':
+            perm=str(b.get('permission') or '').strip()
+            if not perm: return self.send_json(400,{'error':'Thiếu permission'})
+            scope=str(b.get('scope') or 'session'); ttl=int(b.get('ttl_seconds') or 3600)
+            return self.send_json(200,{'ok':True,'grant':permissions.grant(perm,scope,ttl,sid)})
+        if path=='/api/permissions/revoke':
+            return self.send_json(200,{'ok':True,'removed':permissions.revoke(str(b.get('permission') or '') or None,sid)})
+        if path=='/api/mcp/probe': return self.send_json(200,mcp.probe_server(str(b.get('server') or ''),True))
+        if path=='/api/mcp/call':
+            name=str(b.get('tool') or '').strip()
+            if not name: return self.send_json(400,{'error':'Thiếu tool'})
+            result=mcp.call_tool(name,b.get('arguments') if isinstance(b.get('arguments'),dict) else {},sid)
+            return self.send_json(200 if result.get('ok') else (409 if result.get('status')=='needs_confirmation' else 400),result)
         if path in {'/api/chat','/v1/chat/completions'}:
             user=str(b.get('message') or '')
             if not user:
                 msgs=b.get('messages') or []; user=next((str(m.get('content','')) for m in reversed(msgs) if m.get('role')=='user'),'')
             if not user: return self.send_json(400,{'error':'Thiếu nội dung'})
-            sid=str(b.get('session_id') or 'default')
-            try: r=core.answer_query(user,self.server.profile,self.server.model,self.server.ollama,str(b.get('mode','auto')),int(b.get('top_k',6)),int(b.get('timeout',300)),sid)
+            try:
+                if bool(b.get('agent',False)): r=agents.run(user,self.server.profile,self.server.model,self.server.ollama,str(b.get('mode','auto')),sid)
+                else: r=core.answer_query(user,self.server.profile,self.server.model,self.server.ollama,str(b.get('mode','auto')),int(b.get('top_k',6)),int(b.get('timeout',300)),sid)
             except Exception as e: return self.send_json(502,{'error':str(e)})
             if path.startswith('/v1/'): return self.send_json(200,{'id':'chatcmpl-local','object':'chat.completion','model':self.server.model,'choices':[{'index':0,'message':{'role':'assistant','content':r['answer']},'finish_reason':'stop'}]})
             return self.send_json(200,r)
