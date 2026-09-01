@@ -18,7 +18,7 @@ Function ServerReady()
 End Function
 
 If Not ServerReady() Then
-  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v65.py"" --profile balanced --model kimik3-lite-v3 --port 11435"""
+  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v66.py"" --profile balanced --model kimik3-lite-v3 --port 11435"""
   sh.Run cmd, 0, False
   ok = False
   For i = 1 To 40
