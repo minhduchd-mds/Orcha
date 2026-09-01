@@ -84,9 +84,8 @@ def _search_index(query: str, top_k: int=6) -> list[dict]:
 
 
 def _context_stats(session_id: str='default') -> dict:
-    import context_engine as contextx
     import kimik3_lite as core
-    return contextx.inventory(core.load_index(), core.load_memory(), session_id=session_id)
+    return core.context_status(session_id=session_id)
 
 
 def call_tool(name: str, arguments: dict[str,Any]|None=None, session_id: str='default', skill_permissions: dict|None=None) -> dict:
@@ -120,6 +119,7 @@ def self_test() -> None:
     names={x['name'] for x in list_tools()}
     assert {'project.search','filesystem.read_text','context.stats'} <= names
     assert call_tool('filesystem.list',{'path':str(ROOT)})['ok']
+    assert call_tool('context.stats',{})['ok']
     assert call_tool('unknown',{})['error']=='unknown_tool'
     print('PASS: MCP gateway')
 
