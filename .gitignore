@@ -1,0 +1,9 @@
+*.gguf
+*.bin
+models/
+.cache/
+*.log
+__pycache__/
+data/index-v3.jsonl
+data/memory-v3.json
+data/sessions-v3/*.jsonl
