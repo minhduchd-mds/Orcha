@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "default": "confirm",
+  "rules": {
+    "project.search": "auto",
+    "filesystem.read": "auto",
+    "filesystem.list": "auto",
+    "git.read": "auto",
+    "browser.read": "auto",
+    "computer.read": "auto",
+    "computer.focus": "auto",
+    "context.read": "auto",
+    "memory.read": "auto",
+    "filesystem.write": "confirm",
+    "browser.write": "confirm",
+    "computer.input": "confirm",
+    "computer.launch": "confirm",
+    "git.write": "confirm",
+    "shell.execute": "deny",
+    "system.admin": "deny"
+  },
+  "notes": {
+    "green": "Read-only / observation tools may run automatically.",
+    "yellow": "State-changing actions require an explicit grant.",
+    "red": "Denied by default in the Lite runtime."
+  }
+}
