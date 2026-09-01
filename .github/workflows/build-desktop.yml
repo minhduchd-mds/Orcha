@@ -26,6 +26,7 @@ jobs:
           python app/kimik3_lite.py --self-test
           python app/skill_runtime.py
           python app/skill_builder.py
+          python app/workflow_engine.py
           python app/permission_engine.py
           python app/mcp_transport.py
           python app/mcp_gateway.py
@@ -33,6 +34,9 @@ jobs:
           python app/action_log.py
           python app/benchmark_engine.py
           node --check studio/app.js
+          python -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'skillLibrary' in p and 'workflowCanvas' in p and 'Kỹ năng của tôi' in p;print('PASS: Batch5 Studio DOM contract')"
+          python -c "import sys;sys.path.insert(0,'app');import skill_builder as s;assert callable(s.list_all) and callable(s.duplicate) and callable(s.delete) and callable(s.versions);print('PASS: Skill CRUD API contract')"
+          python -c "import sys;sys.path.insert(0,'app');import workflow_engine as w;assert callable(w.reorder) and callable(w.duplicate_workflow);print('PASS: Workflow builder API contract')"
           python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: Computer MCP element handshake')"
       - name: Package Windows portable
         if: github.event_name != 'pull_request'
@@ -61,6 +65,7 @@ jobs:
           python3 app/kimik3_lite.py --self-test
           python3 app/skill_runtime.py
           python3 app/skill_builder.py
+          python3 app/workflow_engine.py
           python3 app/permission_engine.py
           python3 app/mcp_transport.py
           python3 app/mcp_gateway.py
@@ -68,6 +73,7 @@ jobs:
           python3 app/action_log.py
           python3 app/benchmark_engine.py
           node --check studio/app.js
+          python3 -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'skillLibrary' in p and 'workflowCanvas' in p;print('PASS: Batch5 Studio DOM contract')"
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
