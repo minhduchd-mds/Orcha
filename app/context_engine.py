@@ -18,7 +18,6 @@ def approx_tokens(text: str) -> int:
     """Cheap local token estimate. It is deliberately an estimate, not tokenizer output."""
     if not text:
         return 0
-    # Vietnamese/code tends to sit around 3-4 chars/token with modern BPE tokenizers.
     return max(1, int(math.ceil(len(text) / 3.6)))
 
 
@@ -117,7 +116,7 @@ def context_snapshot(
     memory_tokens = sum(approx_tokens(str(x.get('text', ''))) for x in memory_items)
     turns = load_turns(session_id, 64)
     history_tokens = sum(
-        approx_tokens(str(x.get('user', '))) + approx_tokens(str(x.get('assistant', '))) for x in turns
+        approx_tokens(str(x.get('user', ''))) + approx_tokens(str(x.get('assistant', ''))) for x in turns
     )
     skills_tokens, skills_count = _tree_tokens(ROOT / 'skills')
     mcp_tokens, mcp_count = _file_tokens(DATA / 'mcp_tools.json')
