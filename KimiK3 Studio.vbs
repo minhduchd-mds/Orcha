@@ -6,20 +6,34 @@ root = fso.GetParentFolderName(WScript.ScriptFullName)
 url = "http://127.0.0.1:11435/"
 Function ServerReady()
   On Error Resume Next
-  Dim r
+  Dim r, body
   Set r = CreateObject("WinHttp.WinHttpRequest.5.1")
   r.SetTimeouts 500, 500, 500, 500
   r.Open "GET", url & "health", False
   r.Send
-  ServerReady = (Err.Number = 0 And r.Status = 200)
+  body = r.ResponseText
+  ServerReady = (Err.Number = 0 And r.Status = 200 And InStr(1, body, "6.9.0", 1) > 0 And InStr(1, body, "hermes_foundation", 1) > 0)
   Err.Clear
   On Error GoTo 0
 End Function
+Sub StopOldServer()
+  On Error Resume Next
+  Dim r
+  Set r = CreateObject("WinHttp.WinHttpRequest.5.1")
+  r.SetTimeouts 500, 500, 500, 500
+  r.Open "POST", url & "api/app/shutdown", False
+  r.SetRequestHeader "Content-Type", "application/json"
+  r.Send "{}"
+  WScript.Sleep 500
+  Err.Clear
+  On Error GoTo 0
+End Sub
 If Not ServerReady() Then
-  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v68.py"" --profile balanced --model kimik3-lite-v3 --port 11435"""
+  StopOldServer
+  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v69.py"" --profile balanced --port 11435"""
   sh.Run cmd, 0, False
   ok = False
-  For i = 1 To 40
+  For i = 1 To 60
     WScript.Sleep 250
     If ServerReady() Then ok = True: Exit For
   Next
@@ -27,7 +41,7 @@ Else
   ok = True
 End If
 If Not ok Then
-  MsgBox "KimiK3-Lite Studio khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python.", 16, "KimiK3-Lite"
+  MsgBox "KimiK3-Lite Studio v6.9 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "KimiK3-Lite"
   WScript.Quit 1
 End If
 edge = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
