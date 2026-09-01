@@ -1,5 +1,18 @@
 # Changelog
 
+## v6.6.0 — Parallel Agent Orchestrator
+
+- Thêm `parallel_agent.py` với RAM-aware concurrency; máy 4 GB mặc định tối đa 2 worker song song.
+- Coordinator tách nhiệm vụ thành Research, Specialist, Critic và Verifier sub-agent.
+- Các sub-agent chạy song song ở pha read-only/phân tích; thao tác có side effect vẫn serialize qua Permission Gate.
+- Thêm chiến lược `parallel-read-serial-write` để tránh hai agent cùng sửa file, máy tính, Figma hoặc AutoCAD.
+- Thêm synthesis pass tổng hợp evidence và bất đồng giữa các sub-agent.
+- Thêm API `/api/agents/parallel/capacity`, `/plan`, `/run` và `/runs/<id>`.
+- Studio có nút `Song song`, RAM/worker capacity và trạng thái từng sub-agent trong Inspector.
+- Server v6.6 inject UI Parallel Agents mà không làm phình layout chính.
+- Windows/macOS launcher chuyển sang `studio_server_v66.py`.
+- CI kiểm tra Python/JS, RAM guard, parallel policy, desktop package và versioned Release assets.
+
 ## v6.0.0 — Virtual Context + Intelligence Inspector
 
 - Redesign Desktop Studio theo layout 3 cột: Navigation → Workspace → Inspector.
