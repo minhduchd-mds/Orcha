@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "servers": [
     {
       "id": "computer",
@@ -12,11 +12,12 @@
       "protocol_version": "2025-06-18",
       "tools": [
         {"name":"computer.capabilities","permission":"computer.read","description":"Read supported computer-control capabilities."},
-        {"name":"computer.windows.list","permission":"computer.read","description":"List visible application windows."},
+        {"name":"computer.windows.list","permission":"computer.read","description":"List visible application windows with stable element ids."},
         {"name":"computer.window.focus","permission":"computer.focus","description":"Focus a known application window."},
+        {"name":"computer.ui.find","permission":"computer.read","description":"Find UI elements by text/class inside a window."},
         {"name":"computer.app.launch","permission":"computer.launch","description":"Launch a local application."},
-        {"name":"computer.ui.click","permission":"computer.input","description":"Click confirmed screen coordinates."},
-        {"name":"computer.ui.type","permission":"computer.input","description":"Type text into the focused control."}
+        {"name":"computer.ui.click","permission":"computer.input","description":"Click a confirmed UI element or coordinates."},
+        {"name":"computer.ui.type","permission":"computer.input","description":"Type text into a confirmed UI element."}
       ]
     },
     {
@@ -33,7 +34,9 @@
         {"name":"autocad.document.get","permission":"computer.read","description":"Read active drawing metadata."},
         {"name":"autocad.layers.list","permission":"computer.read","description":"List drawing layers."},
         {"name":"autocad.layer.create","permission":"computer.input","description":"Create a drawing layer."},
-        {"name":"autocad.entity.create","permission":"computer.input","description":"Create a structured drawing entity."},
+        {"name":"autocad.entity.create","permission":"computer.input","description":"Create line, polyline, text or circle."},
+        {"name":"autocad.dimension.create","permission":"computer.input","description":"Create an aligned dimension."},
+        {"name":"autocad.entity.delete","permission":"computer.input","description":"Delete one entity by handle; used for explicit rollback."},
         {"name":"autocad.document.save","permission":"filesystem.write","description":"Save the active drawing."}
       ]
     }
