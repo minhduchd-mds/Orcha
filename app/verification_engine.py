@@ -16,16 +16,17 @@ PY_COMPILE = [
     'app/kimik3_lite.py', 'app/context_engine.py', 'app/workflow_engine.py',
     'app/studio_server.py', 'app/studio_server_v64.py', 'app/studio_server_v65.py',
     'app/studio_server_v66.py', 'app/studio_server_v67.py', 'app/studio_server_v68.py',
-    'app/studio_server_v69.py', 'app/studio_server_v70.py', 'app/harness_runtime.py',
-    'app/verification_engine.py', 'app/hermes_runtime.py', 'app/agent_runtime.py',
-    'app/mcp_gateway.py', 'app/permission_engine.py', 'app/model_registry.py',
-    'app/parallel_agent.py', 'app/agent_team.py', 'app/self_improvement.py',
-    'app/maintenance.py',
+    'app/studio_server_v69.py', 'app/studio_server_v70.py', 'app/studio_server_v71.py',
+    'app/harness_runtime.py', 'app/verification_engine.py', 'app/team_runtime.py',
+    'app/hermes_runtime.py', 'app/agent_runtime.py', 'app/mcp_gateway.py',
+    'app/permission_engine.py', 'app/model_registry.py', 'app/parallel_agent.py',
+    'app/agent_team.py', 'app/self_improvement.py', 'app/maintenance.py',
 ]
 SELF_TESTS = [
-    'app/harness_runtime.py', 'app/model_registry.py', 'app/hermes_runtime.py',
-    'app/permission_engine.py', 'app/mcp_gateway.py', 'app/parallel_agent.py',
-    'app/agent_team.py', 'app/self_improvement.py', 'app/maintenance.py',
+    'app/harness_runtime.py', 'app/team_runtime.py', 'app/model_registry.py',
+    'app/hermes_runtime.py', 'app/permission_engine.py', 'app/mcp_gateway.py',
+    'app/parallel_agent.py', 'app/agent_team.py', 'app/self_improvement.py',
+    'app/maintenance.py',
 ]
 JS_CHECKS = [
     'studio/app.js', 'studio/model-manager.js', 'studio/design-agent.js',
@@ -82,17 +83,15 @@ def verify(root: str | Path = ROOT, profile: str = 'fast', timeout_per_check: in
         raise ValueError('Verifier v1 chỉ chạy trên source bundle KimiK3-Lite đã tin cậy')
     available = recipes(root)
     if profile == 'fast':
-        selected = [x for x in available if x['id'] in {'python-compile', 'self-harness_runtime', 'self-model_registry', 'self-hermes_runtime'} or x['id'].startswith('node-app') or x['id'].startswith('node-harness')]
+        selected = [x for x in available if x['id'] in {'python-compile', 'self-harness_runtime', 'self-team_runtime', 'self-model_registry', 'self-hermes_runtime'} or x['id'].startswith('node-app') or x['id'].startswith('node-harness') or x['id'].startswith('node-agent-team')]
     elif profile == 'full':
         selected = available
     else:
         raise ValueError('profile verifier chỉ nhận fast hoặc full')
-    started = time.time()
-    results = []
+    started = time.time(); results = []
     for recipe in selected:
         result = _run(list(recipe['argv']), root, timeout_per_check)
-        result['id'] = recipe['id']; result['label'] = recipe['label']
-        results.append(result)
+        result['id'] = recipe['id']; result['label'] = recipe['label']; results.append(result)
         if not result['ok'] and profile == 'fast':
             break
     return {
@@ -108,8 +107,9 @@ def verify(root: str | Path = ROOT, profile: str = 'fast', timeout_per_check: in
 def self_test() -> None:
     rows = recipes(ROOT)
     assert any(x['id'] == 'python-compile' for x in rows)
+    assert any(x['id'] == 'self-team_runtime' for x in rows)
     assert all(isinstance(x['argv'], list) and x['argv'] for x in rows)
-    print('PASS: safe verification recipes')
+    print('PASS: safe verification recipes + durable team')
 
 
 if __name__ == '__main__':
