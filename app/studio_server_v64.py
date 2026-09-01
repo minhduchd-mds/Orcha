@@ -41,7 +41,7 @@ def uiux_pipeline(user,images,server,mode,sid):
     model=companion.get('ollama_tag') or server.model
     q='''Bạn là UI/UX reviewer. Dựa trên quan sát vision bên dưới và yêu cầu người dùng, hãy phân tích bằng tiếng Việt. Phân biệt Evidence / UI issue / UX issue / Recommendation. Xếp P0/P1/P2, có acceptance criteria. Không bịa chi tiết không có trong quan sát.\n\nYêu cầu: %s\n\nVISION OBSERVATION:\n%s'''%(user,observation)
     r=core.answer_query(q,'balanced',model,server.ollama,mode,6,300,sid)
-    r['vision']={'model':tag,'observation':observation,'companion':model};r['model_route']={'task':'uiux','selected':vis,'reason':'image+uiux-composite'};return r
+    r['vision']={'model':tag,'observation':observation,'companion':model};r['model_route']={'task':'uiux','selected':vis,'runtime_selected':companion,'reason':'image+uiux-composite'};return r
 
 class H64(legacy.H):
     def do_GET(self):
@@ -94,9 +94,9 @@ class H64(legacy.H):
                 try:
                     if images and mid=='uiux-vision-lite':r=uiux_pipeline(user,images,self.server,str(b.get('mode','auto')),sid)
                     else:
-                        model=str(sel.get('ollama_tag') or self.server.model)
+                        runtime=registry.runtime_model(sel,bool(images));model=str(runtime.get('model') or self.server.model)
                         r=agents.run(user,self.server.profile,model,self.server.ollama,str(b.get('mode','auto')),sid) if bool(b.get('agent',False)) else core.answer_query(user,self.server.profile,model,self.server.ollama,str(b.get('mode','auto')),int(b.get('top_k',6)),int(b.get('timeout',300)),sid)
-                        r['model_route']=route
+                        r['model_route']={**route,'runtime_selected':runtime.get('selected'),'runtime_reason':runtime.get('reason')}
                     return self.send_json(200,r)
                 except Exception as e:
                     fallback=registry.get('balanced')
