@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, base64, json, subprocess, threading, time, urllib.request, uuid
+import argparse, json, subprocess, threading, urllib.request, uuid
 from http.server import ThreadingHTTPServer
 
 import studio_server as legacy
 import model_registry as registry
+import model_benchmark as modelbench
 import kimik3_lite as core
 import agent_runtime as agents
 
@@ -46,12 +47,13 @@ class H64(legacy.H):
     def do_GET(self):
         from urllib.parse import urlsplit
         path=urlsplit(self.path).path
-        if path=='/health':return self.send_json(200,{'ok':True,'version':'6.4.0','model_manager':True,'auto_router':True,'uiux_vision':True})
+        if path=='/health':return self.send_json(200,{'ok':True,'version':'6.4.0','model_manager':True,'auto_router':True,'uiux_vision':True,'model_benchmark':True})
         if path=='/api/models':
-            ins=installed(self.server.ollama);rows=[]
+            ins=installed(self.server.ollama);rows=[];bench=modelbench.last()
             for m in registry.list_models():
-                y=dict(m);tag=str(y.get('ollama_tag') or '');y['installed']=any(x==tag or x.split(':')[0]==tag.split(':')[0] for x in ins);rows.append(y)
+                y=dict(m);tag=str(y.get('ollama_tag') or '');y['installed']=any(x==tag or x.split(':')[0]==tag.split(':')[0] for x in ins);y['benchmark']=bench.get(str(y.get('id'))) if isinstance(bench,dict) else None;rows.append(y)
             return self.send_json(200,{'models':rows,'installed':ins,'system_ram_gb':registry.total_ram_gb(),'active_model':self.server.model,'model_mode':getattr(self.server,'model_mode','auto')})
+        if path=='/api/models/benchmarks':return self.send_json(200,modelbench.last())
         if path.startswith('/api/models/job/'):
             return self.send_json(200,MODEL_JOBS.get(path.rsplit('/',1)[-1],{'status':'missing'}))
         return super().do_GET()
@@ -62,6 +64,10 @@ class H64(legacy.H):
             try:b=self.body()
             except Exception:return self.send_json(400,{'error':'invalid json'})
             if path=='/api/models/route':return self.send_json(200,registry.route(str(b.get('message') or ''),bool(b.get('has_image')),str(b.get('preferred') or 'auto')))
+            if path=='/api/models/compare':return self.send_json(200,modelbench.compare([str(x) for x in (b.get('ids') or [])][:8]))
+            if path=='/api/models/benchmark':
+                try:return self.send_json(200,modelbench.benchmark(str(b.get('id') or ''),self.server.ollama))
+                except Exception as e:return self.send_json(409,{'error':str(e)})
             if path=='/api/models/save':
                 try:return self.send_json(200,registry.save_model(b))
                 except Exception as e:return self.send_json(400,{'error':str(e)})
