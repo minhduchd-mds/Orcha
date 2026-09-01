@@ -1,0 +1,93 @@
+name: Publish KimiK3-Lite v6.2.0
+
+on:
+  push:
+    branches: ['release/v6.2.0-final-run']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 73896f7afc4e21510ab402631a1000c001e66583
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Windows source
+        shell: pwsh
+        run: |
+          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python app/kimik3_lite.py --self-test
+          python app/skill_runtime.py
+          python app/skill_builder.py
+          python app/permission_engine.py
+          python app/mcp_transport.py
+          python app/mcp_gateway.py
+          python app/agent_runtime.py
+          python app/action_log.py
+          python app/benchmark_engine.py
+          node --check studio/app.js
+      - name: Package Windows portable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v6.2.0-Windows | Out-Null
+          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v6.2.0-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\KimiK3-Lite-v6.2.0-Windows -DestinationPath dist\KimiK3-Lite-v6.2.0-Windows-Portable.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KimiK3-Lite-v6.2.0-Windows-Portable
+          path: dist/KimiK3-Lite-v6.2.0-Windows-Portable.zip
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 73896f7afc4e21510ab402631a1000c001e66583
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify macOS source
+        run: |
+          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python3 app/kimik3_lite.py --self-test
+          python3 app/skill_runtime.py
+          python3 app/skill_builder.py
+          python3 app/permission_engine.py
+          python3 app/mcp_transport.py
+          python3 app/mcp_gateway.py
+          python3 app/agent_runtime.py
+          python3 app/action_log.py
+          python3 app/benchmark_engine.py
+          node --check studio/app.js
+      - name: Build DMG
+        run: ./packaging/macos/build-dmg.sh
+      - name: Rename DMG
+        run: mv dist/KimiK3-Lite-v6-macOS.dmg dist/KimiK3-Lite-v6.2.0-macOS.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KimiK3-Lite-v6.2.0-macOS-DMG
+          path: dist/KimiK3-Lite-v6.2.0-macOS.dmg
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish GitHub Release v6.2.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v6.2.0 release-assets/* \
+            --repo minhduchd-mds/kimik3-lite---4G \
+            --target 73896f7afc4e21510ab402631a1000c001e66583 \
+            --title "KimiK3-Lite Studio v6.2.0" \
+            --notes "KimiK3-Lite Studio v6.2.0 — Local Agent Executor, 1M Virtual Context, Skill Runtime, MCP Gateway, Windows Computer Control, AutoCAD Bridge, Action Timeline, rollback metadata, Skill Builder and KII Benchmark.\n\nDownloads:\n- Windows Portable ZIP\n- macOS DMG\n\nRecommended profile: Balanced (~522 MB model download via Ollama). Model weights are not bundled in the release assets."
