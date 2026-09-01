@@ -1,5 +1,18 @@
 # Changelog
 
+## v6.8.0 — Final Intelligence & Hardening
+
+- Thêm `self_improvement.py`: lưu outcome, lesson local và performance score theo chiến lược `single / parallel / team`.
+- Strategy recommendation dựa trên lịch sử cục bộ + RAM Guard; không tự sửa executable code.
+- Agent Performance Inspector hiển thị success rate, latency, strategy score và lesson gần nhất.
+- Người dùng có feedback `Tốt / Chưa tốt` để điều chỉnh score an toàn.
+- Safety guard cố định: không self-modify code, không tự tăng permission, không auto-run red tools.
+- Thêm `maintenance.py` với security audit cho secret/config và kiểm tra presence của Permission/MCP guard.
+- Thêm backup local dạng ZIP cho skills, workflows, memory, sessions, knowledge, learning, agent-team và design reports.
+- Thêm API learning dashboard/outcome/recommend/lessons và maintenance security/backup.
+- Windows/macOS launcher và native package chuyển sang server `studio_server_v68.py`, bundle version 6.8.0.
+- CI cuối kiểm tra safe-learning, security contract, Team/Parallel/MCP regression, JS UI và desktop packaging.
+
 ## v6.7.0 — Agent Team + Dependency Graph
 
 - Thêm `agent_team.py` để điều phối đội agent theo DAG thay vì chỉ chạy sub-agent độc lập.
