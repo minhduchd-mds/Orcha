@@ -1,0 +1,13 @@
+*.min.js
+*.map
+*.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+*.log
+*.bin
+*.exe
+*.dll
+*.zip
+*.7z
+*.pdf

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "max": {"base":"gemma3:270m-it-qat","ollama_name":"kimik3-lite-v3-max","published_model_size":"~241 MB","context":2048,"recommended_mode":"fast"},
+  "balanced": {"base":"qwen3:0.6b-q4_K_M","ollama_name":"kimik3-lite-v3","published_model_size":"~522 MB","context":4096,"recommended_mode":"auto"},
+  "quality": {"base":"qwen3:1.7b","ollama_name":"kimik3-lite-v3-quality","published_model_size":"~1.4 GB","context":6144,"recommended_mode":"deep"}
+}
