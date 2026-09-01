@@ -71,7 +71,7 @@ def choose_folder():
         import tkinter as tk;from tkinter import filedialog
         r=tk.Tk();r.withdraw();v=filedialog.askdirectory(title='Chọn thư mục để KimiK3-Lite đọc');r.destroy();return v or ''
     except Exception:return ''
-def _skill_list():return [skills.compact_skill(x) for x in skills.list_skills()]
+def _skill_list():return skill_builder.list_all()
 
 class H(BaseHTTPRequestHandler):
     def send_json(self,code,obj):
@@ -84,11 +84,15 @@ class H(BaseHTTPRequestHandler):
         raw=p.read_bytes();self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(str(p))[0] or 'application/octet-stream');self.send_header('Cache-Control','no-cache');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_GET(self):
         q=urlsplit(self.path);path=q.path;query=parse_qs(q.query);sid=str(query.get('session',['default'])[0])
-        if path=='/health':return self.send_json(200,{'ok':True,'version':'6.2.0','agent_runtime':True,'mcp':True,'audit':True})
+        if path=='/health':return self.send_json(200,{'ok':True,'version':'6.3.0','agent_runtime':True,'mcp':True,'skill_library':True,'workflow_builder':True})
         if path=='/api/studio/status':
             ms=ollama_models(self.server.ollama);sk=_skill_list();servers=mcp.list_servers(False);tools=mcp.list_tools(sid);return self.send_json(200,{'ollama':bool(ms),'models':ms,'profile':self.server.profile,'model':self.server.model,'model_ready':any(x.split(':')[0]==self.server.model.split(':')[0] for x in ms),'profiles':profiles(),'index_chunks':len(core.load_index()),'memory_items':len(core.load_memory()),'context':core.context_status(self.server.profile,sid),'skill_count':len(sk),'mcp_server_count':len(servers),'mcp_tool_count':len(tools),'benchmark':benchmark.last()})
         if path=='/api/context':return self.send_json(200,core.context_status(self.server.profile,sid))
         if path=='/api/skills':return self.send_json(200,_skill_list())
+        if path.startswith('/api/skills/') and path.count('/')==3:
+            sid2=path.rsplit('/',1)[-1];item=skill_builder.get(sid2);return self.send_json(200,item) if item else self.send_json(404,{'error':'Không tìm thấy skill'})
+        if path.startswith('/api/skills/') and path.endswith('/versions'):
+            sid2=path.split('/')[-2];return self.send_json(200,skill_builder.versions(sid2))
         if path=='/api/mcp/servers':return self.send_json(200,mcp.list_servers(str(query.get('probe',['0'])[0]).lower() in {'1','true','yes'}))
         if path=='/api/mcp/tools':return self.send_json(200,mcp.list_tools(sid))
         if path=='/api/permissions':return self.send_json(200,{'policy':permissions.policy(),'grants':permissions.grants(),'session_id':sid})
@@ -114,8 +118,17 @@ class H(BaseHTTPRequestHandler):
             except Exception as e:return self.send_json(400,{'error':str(e)})
         if path=='/api/memory':core.remember(str(b.get('text','')),str(b.get('category','fact')));return self.send_json(200,{'ok':True,'items':core.load_memory()})
         if path=='/api/memory/clear':core.clear_memory();return self.send_json(200,{'ok':True})
-        if path=='/api/skills/create':
+        if path in {'/api/skills/create','/api/skills/save'}:
             try:return self.send_json(200,skill_builder.save(b))
+            except Exception as e:return self.send_json(400,{'error':str(e)})
+        if path=='/api/skills/status':
+            try:return self.send_json(200,skill_builder.set_status(str(b.get('id') or ''),str(b.get('status') or 'active')))
+            except Exception as e:return self.send_json(400,{'error':str(e)})
+        if path=='/api/skills/delete':
+            try:return self.send_json(200,{'ok':skill_builder.delete(str(b.get('id') or ''))})
+            except Exception as e:return self.send_json(409,{'error':str(e)})
+        if path=='/api/skills/duplicate':
+            try:return self.send_json(200,skill_builder.duplicate(str(b.get('id') or ''),str(b.get('new_id') or '') or None))
             except Exception as e:return self.send_json(400,{'error':str(e)})
         if path=='/api/benchmark/run':return self.send_json(200,benchmark.run(self.server.profile,sid))
         if path=='/api/agent/preview':
@@ -154,8 +167,14 @@ class H(BaseHTTPRequestHandler):
         if path=='/api/workflows/run':
             try:return self.send_json(202,workflows.start_run(str(b.get('workflow_id','')),str(b.get('goal','')),self.server.profile,self.server.model,self.server.ollama))
             except Exception as e:return self.send_json(400,{'error':str(e)})
-        if path=='/api/workflows':
+        if path=='/api/workflows/save':
             try:return self.send_json(200,workflows.save_workflow(b))
+            except Exception as e:return self.send_json(400,{'error':str(e)})
+        if path=='/api/workflows/duplicate':
+            try:return self.send_json(200,workflows.duplicate_workflow(str(b.get('id') or '')))
+            except Exception as e:return self.send_json(400,{'error':str(e)})
+        if path=='/api/workflows/reorder':
+            try:return self.send_json(200,workflows.reorder(str(b.get('id') or ''),b.get('order') or []))
             except Exception as e:return self.send_json(400,{'error':str(e)})
         if path=='/api/workflows/delete':return self.send_json(200,{'ok':workflows.delete_workflow(str(b.get('id','')))})
         if path=='/api/app/shutdown':self.send_json(200,{'ok':True});threading.Thread(target=self.server.shutdown,daemon=True).start();return
