@@ -1,8 +1,11 @@
-name: Publish Orcha v7.5.0
+name: Build Orcha Desktop Packages
 
 on:
   push:
-    branches: [release/v7.5.0]
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,34 +19,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify v7.5 Windows
+      - name: Verify v7.6 Windows
         shell: pwsh
         run: |
-          python -m py_compile app/*.py mcp_servers/*.py
-          python app/kimik3_lite.py --self-test
-          python app/data_sync.py
-          python app/mobile_runtime.py
-          python app/reference_catalog.py
-          python app/agent_runtime.py
-          python app/permission_engine.py
-          python app/mcp_gateway.py
-          node --check studio/app.js
-          node --check studio/orcha-hybrid.js
-          node --check studio/ui-foundation.js
-          node --check studio/plugin-center.js
+          python scripts/verify.py
+          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.6.0' in p and 'api_security' in p and '/api/reference/plugins' in p and 'api-client.js' in p"
           python -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p"
-          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.5.0' in p and 'ui_foundation' in p and '/api/reference/plugins' in p"
-      - name: Package Windows
+          python -c "from pathlib import Path;p=Path('studio/api-client.js').read_text(encoding='utf-8');assert 'X-Orcha-Token' in p and '/api/session' in p"
+          python scripts/desktop_control.py health --port 1; if ($LASTEXITCODE -eq 0) { throw 'health guard unexpectedly succeeded' }
+      - name: Package Windows portable
+        if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist\Orcha-v7.5.0-Windows | Out-Null
-          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','MACOS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','Orcha.vbs','Orcha.command','Stop Orcha.vbs','Stop Orcha.command','Create Desktop Shortcut.vbs','KimiK3 Studio.vbs','KimiK3 Studio.command','.kimik3ignore')
-          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\Orcha-v7.5.0-Windows -Recurse -Force } }
-          Compress-Archive -Path dist\Orcha-v7.5.0-Windows -DestinationPath dist\Orcha-v7.5.0-Windows-Portable.zip -Force
+          New-Item -ItemType Directory -Force dist\Orcha-v7-Windows | Out-Null
+          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','tests','README.md','CHANGELOG.md','LICENSE','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','MACOS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','Orcha.vbs','Orcha.command','Stop Orcha.vbs','Stop Orcha.command','Create Desktop Shortcut.vbs','KimiK3 Studio.vbs','KimiK3 Studio.command','.kimik3ignore')
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\Orcha-v7-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\Orcha-v7-Windows -DestinationPath dist\Orcha-v7-Windows-Portable.zip -Force
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          name: Orcha-v7.5.0-Windows-Portable
-          path: dist/Orcha-v7.5.0-Windows-Portable.zip
+          name: Orcha-v7-Windows-Portable
+          path: dist/Orcha-v7-Windows-Portable.zip
 
   macos:
     runs-on: macos-latest
@@ -52,27 +48,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify v7.5 macOS
+      - name: Verify v7.6 macOS
         run: |
-          python3 -m py_compile app/*.py mcp_servers/*.py
-          python3 app/kimik3_lite.py --self-test
-          python3 app/data_sync.py
-          python3 app/mobile_runtime.py
-          python3 app/reference_catalog.py
-          node --check studio/orcha-hybrid.js
-          node --check studio/ui-foundation.js
-          node --check studio/plugin-center.js
-          bash -n "Orcha.command" "Stop Orcha.command" packaging/macos/build-dmg.sh
-      - name: Build macOS DMG
-        run: |
-          ./packaging/macos/build-dmg.sh
-          mv dist/Orcha-v7-macOS.dmg dist/Orcha-v7.5.0-macOS.dmg
+          python3 scripts/verify.py
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.6.0' in p and 'api_security' in p and '/api/reference/plugins' in p and 'api-client.js' in p"
+          python3 -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p"
+          python3 -c "from pathlib import Path;p=Path('studio/api-client.js').read_text(encoding='utf-8');assert 'X-Orcha-Token' in p and '/api/session' in p"
+          bash -n "Orcha.command" "Stop Orcha.command" "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
+      - name: Build DMG
+        if: github.event_name != 'pull_request'
+        run: ./packaging/macos/build-dmg.sh
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          name: Orcha-v7.5.0-macOS-DMG
-          path: dist/Orcha-v7.5.0-macOS.dmg
+          name: Orcha-v7-macOS-DMG
+          path: dist/Orcha-v7-macOS.dmg
 
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [windows, macos]
     runs-on: ubuntu-latest
     steps:
@@ -81,9 +74,11 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
-      - name: Publish GitHub Release v7.5.0
+      - name: Version release assets
+        run: |
+          mv release-assets/Orcha-v7-Windows-Portable.zip "release-assets/Orcha-${GITHUB_REF_NAME}-Windows-Portable.zip"
+          mv release-assets/Orcha-v7-macOS.dmg "release-assets/Orcha-${GITHUB_REF_NAME}-macOS.dmg"
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release view v7.5.0 >/dev/null 2>&1 && gh release delete v7.5.0 -y --cleanup-tag || true
-          gh release create v7.5.0 release-assets/* --target e355250b977b9a478e7cab2cf4d04bde8cd707c2 --generate-notes --title "Orcha v7.5.0"
+        run: gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --title "Orcha ${GITHUB_REF_NAME}"
