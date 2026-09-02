@@ -19,11 +19,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify v7.6 Windows
+      - name: Verify v7.7 Windows
         shell: pwsh
         run: |
           python scripts/verify.py
-          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.6.0' in p and 'api_security' in p and '/api/reference/plugins' in p and 'api-client.js' in p"
+          python -c "from pathlib import Path;p=Path('app/studio_server_v77.py').read_text(encoding='utf-8');assert '7.7.0' in p and 'ui_contract' in p and 'outline_icons' in p and 'claude_can_override_visual_baseline' in p"
+          python -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'Anh muốn Orcha làm gì?' in p and 'Orcha cần quyền thực hiện' in p and 'Kimi cần quyền' not in p"
+          python -c "from pathlib import Path;p=Path('studio/ui-foundation.js').read_text(encoding='utf-8');assert \"iconRule:'outline-only'\" in p and 'fill=\"none\"' in p and 'stroke=\"currentColor\"' in p"
           python -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p"
           python -c "from pathlib import Path;p=Path('studio/api-client.js').read_text(encoding='utf-8');assert 'X-Orcha-Token' in p and '/api/session' in p"
       - name: Package Windows portable
@@ -47,10 +49,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify v7.6 macOS
+      - name: Verify v7.7 macOS
         run: |
           python3 scripts/verify.py
-          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.6.0' in p and 'api_security' in p and '/api/reference/plugins' in p and 'api-client.js' in p"
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v77.py').read_text(encoding='utf-8');assert '7.7.0' in p and 'ui_contract' in p and 'outline_icons' in p"
+          python3 -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'Anh muốn Orcha làm gì?' in p and 'Orcha cần quyền thực hiện' in p and 'Kimi cần quyền' not in p"
+          python3 -c "from pathlib import Path;p=Path('studio/ui-foundation.js').read_text(encoding='utf-8');assert \"iconRule:'outline-only'\" in p and 'fill=\"none\"' in p and 'stroke=\"currentColor\"' in p"
           python3 -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p"
           python3 -c "from pathlib import Path;p=Path('studio/api-client.js').read_text(encoding='utf-8');assert 'X-Orcha-Token' in p and '/api/session' in p"
           bash -n "Orcha.command" "Stop Orcha.command" "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
