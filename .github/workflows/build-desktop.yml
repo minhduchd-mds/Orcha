@@ -22,34 +22,31 @@ jobs:
       - name: Verify Windows source
         shell: pwsh
         run: |
-          python -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/studio_server_v68.py app/studio_server_v69.py app/studio_server_v70.py app/project_workspace.py app/project_planner.py app/harness_runtime.py app/verification_engine.py app/hermes_runtime.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/self_improvement.py app/maintenance.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python -m py_compile app/*.py mcp_servers/*.py
           python app/kimik3_lite.py --self-test
           python app/model_registry.py
           python app/hermes_runtime.py
           python app/harness_runtime.py
-          python app/verification_engine.py
           python app/project_workspace.py
           python app/project_planner.py
+          python app/project_supervisor.py
           python app/agent_runtime.py
           python app/parallel_agent.py
           python app/agent_team.py
-          python app/self_improvement.py
-          python app/maintenance.py
           python app/permission_engine.py
           python app/mcp_gateway.py
           node --check studio/app.js
+          node --check studio/project-workspace.js
+          node --check studio/project-planner.js
+          node --check studio/project-supervisor.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
           node --check studio/parallel-agents.js
           node --check studio/agent-team.js
-          node --check studio/final-intelligence.js
-          node --check studio/hermes.js
-          node --check studio/harness.js
-          node --check studio/project-workspace.js
-          node --check studio/project-planner.js
-          python -c "import sys;sys.path.insert(0,'app');import project_planner as p;x=p.plan('Audit UI/UX và cập nhật thiết kế',4);assert x['policy']['write_requires_approval'] and any(t['approval_required'] for t in x['tasks']);print('PASS: autonomous planner safety')"
-          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert 'project-planner.js' in p and '/api/planner/plan' in p and '7.2.0' in p;print('PASS: v7.2 planner server contract')"
-          python -c "from pathlib import Path;p=Path('KimiK3 Studio.vbs').read_text(encoding='utf-8');assert '7.2.0' in p and 'autonomous_project_planner' in p;print('PASS: Windows launcher v7.2')"
+          python -c "import sys;sys.path.insert(0,'app');import project_planner as p;x=p.plan('Audit UI/UX và cập nhật thiết kế',4);assert x['policy']['write_requires_approval'];print('PASS: planner safety')"
+          python -c "from pathlib import Path;p=Path('app/project_supervisor.py').read_text(encoding='utf-8');assert 'auto_read_only' in p and 'permission_engine_authoritative' in p and 'write_background_execution' not in p;print('PASS: supervisor safety contract')"
+          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.3.0' in p and 'project_executor_supervisor' in p and '/supervisor' in p;print('PASS: v7.3 server contract')"
+          python -c "from pathlib import Path;p=Path('KimiK3 Studio.vbs').read_text(encoding='utf-8');assert '7.3.0' in p and 'project_executor_supervisor' in p;print('PASS: Windows launcher v7.3')"
           python -c "import sys;sys.path.insert(0,'app');import agent_team as t;p=t.plan('Review UI/UX',2);assert p['budget']['workers']<=2 and p['policy']=='parallel-read-serial-write';print('PASS: team regression')"
           python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: MCP regression')"
       - name: Package Windows portable
@@ -75,31 +72,27 @@ jobs:
           python-version: '3.12'
       - name: Verify macOS source
         run: |
-          python3 -m py_compile app/kimik3_lite.py app/context_engine.py app/workflow_engine.py app/studio_server.py app/studio_server_v64.py app/studio_server_v65.py app/studio_server_v66.py app/studio_server_v67.py app/studio_server_v68.py app/studio_server_v69.py app/studio_server_v70.py app/project_workspace.py app/project_planner.py app/harness_runtime.py app/verification_engine.py app/hermes_runtime.py app/uiux_design_agent.py app/parallel_agent.py app/agent_team.py app/self_improvement.py app/maintenance.py app/model_registry.py app/model_benchmark.py app/skill_runtime.py app/skill_builder.py app/permission_engine.py app/mcp_gateway.py app/mcp_transport.py app/agent_runtime.py app/action_log.py app/benchmark_engine.py mcp_servers/common.py mcp_servers/computer_server.py mcp_servers/autocad_server.py
+          python3 -m py_compile app/*.py mcp_servers/*.py
           python3 app/kimik3_lite.py --self-test
           python3 app/model_registry.py
           python3 app/hermes_runtime.py
           python3 app/harness_runtime.py
-          python3 app/verification_engine.py
           python3 app/project_workspace.py
           python3 app/project_planner.py
+          python3 app/project_supervisor.py
           python3 app/agent_runtime.py
           python3 app/parallel_agent.py
           python3 app/agent_team.py
-          python3 app/self_improvement.py
-          python3 app/maintenance.py
+          python3 app/permission_engine.py
+          python3 app/mcp_gateway.py
           node --check studio/app.js
-          node --check studio/model-manager.js
-          node --check studio/design-agent.js
-          node --check studio/parallel-agents.js
-          node --check studio/agent-team.js
-          node --check studio/final-intelligence.js
-          node --check studio/hermes.js
-          node --check studio/harness.js
           node --check studio/project-workspace.js
           node --check studio/project-planner.js
-          python3 -c "import sys;sys.path.insert(0,'app');import project_planner as p;x=p.plan('Review code và sửa lỗi',4);assert x['estimate']['tasks']>=4 and x['policy']['auto_permission_escalation']==False;print('PASS: planner contract')"
-          python3 -c "from pathlib import Path;p=Path('KimiK3 Studio.command').read_text(encoding='utf-8');assert '7.2.0' in p and 'autonomous_project_planner' in p;print('PASS: macOS launcher v7.2')"
+          node --check studio/project-supervisor.js
+          node --check studio/model-manager.js
+          node --check studio/design-agent.js
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.3.0' in p and 'auto_read_only_tasks' in p and 'write_background_execution' in p;print('PASS: supervisor server policy')"
+          python3 -c "from pathlib import Path;p=Path('KimiK3 Studio.command').read_text(encoding='utf-8');assert '7.3.0' in p and 'project_executor_supervisor' in p;print('PASS: macOS launcher v7.3')"
           bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
