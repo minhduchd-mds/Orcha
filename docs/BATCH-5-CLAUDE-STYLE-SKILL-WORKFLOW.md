@@ -1,10 +1,12 @@
-# Batch 5 — Claude-style Workspace + Skill Library + Workflow UX
+# Orcha — Workspace + Skill Library + Workflow UX
 
-Batch 5 giữ hai không gian chính **Trò chuyện** và **Công việc**, nhưng giảm nhiễu thị giác, tăng vùng nội dung và chuyển các khả năng kỹ thuật sang sidebar/inspector hỗ trợ.
+> Historical foundation: this capability was introduced before the Orcha rebrand. Current product name is **Orcha**.
 
-## 10 hạng mục
+Orcha giữ hai không gian chính **Trò chuyện** và **Công việc**, giảm nhiễu thị giác, tăng vùng nội dung và chuyển các khả năng kỹ thuật sang sidebar/inspector hỗ trợ.
 
-1. Claude-inspired calm three-column workspace (không sao chép UI).
+## Năng lực
+
+1. Calm three-column workspace, lấy nguyên tắc tối giản làm tham khảo nhưng không sao chép UI của sản phẩm khác.
 2. Sidebar nhẹ: Trò chuyện, Công việc + Kỹ năng/Knowledge/MCP/Model.
 3. Chat composer tối giản, Skill/Agent đặt cạnh input.
 4. Inspector Context/KII/Agent/Timeline/MCP/Sources gọn hơn.
@@ -17,8 +19,6 @@ Batch 5 giữ hai không gian chính **Trò chuyện** và **Công việc**, nh�
 
 ## Skill storage
 
-User-created skills tiếp tục dùng cấu trúc portable:
-
 ```text
 skills/<skill-id>/
   SKILL.md
@@ -28,11 +28,11 @@ skills/<skill-id>/
     v2.md
 ```
 
-`SKILL.md` vẫn là định dạng thực thi chính. `.skill-meta.json` chỉ giữ metadata UI/status/version.
+`SKILL.md` là định dạng thực thi chính. `.skill-meta.json` giữ metadata UI/status/version.
 
 ## Workflow storage
 
-Workflow được lưu local tại `data/workflows.json`. Step có stable `id`, `name`, `type`, `mode`, `instruction`, `enabled`. Reorder chỉ thay đổi thứ tự ID, không sửa nội dung step.
+Workflow được lưu trong data directory của Orcha. Step có stable `id`, `name`, `type`, `mode`, `instruction`, `enabled`. Reorder chỉ thay đổi thứ tự ID, không sửa nội dung step.
 
 ## UX principles
 
