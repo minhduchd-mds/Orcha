@@ -1,3 +1,7 @@
 # License note
 
-This repository contains wrapper scripts, application code, Modelfiles and documentation authored for KimiK3-Lite. Model weights are not redistributed here. Ollama downloads the selected base model from its registry; users must review and comply with the license/terms published for each selected base model.
+This repository contains application code, orchestration logic, wrapper scripts, Modelfiles and documentation authored for **Orcha**.
+
+Orcha is an autonomous work platform and does not redistribute third-party model weights. Ollama, Hugging Face, mobile runtimes, cloud providers and external data sources remain separate dependencies/services. Users must review and comply with the license, terms and data-usage requirements of every selected model, provider and source.
+
+Legacy references to KimiK3-Lite may remain only where required for backward-compatible environment variables, migration paths or historical release notes. They do not describe the current product brand.
