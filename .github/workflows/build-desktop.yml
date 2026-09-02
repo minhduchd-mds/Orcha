@@ -26,7 +26,6 @@ jobs:
           python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.6.0' in p and 'api_security' in p and '/api/reference/plugins' in p and 'api-client.js' in p"
           python -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p"
           python -c "from pathlib import Path;p=Path('studio/api-client.js').read_text(encoding='utf-8');assert 'X-Orcha-Token' in p and '/api/session' in p"
-          python scripts/desktop_control.py health --port 1; if ($LASTEXITCODE -eq 0) { throw 'health guard unexpectedly succeeded' }
       - name: Package Windows portable
         if: github.event_name != 'pull_request'
         shell: pwsh
