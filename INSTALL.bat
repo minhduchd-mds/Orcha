@@ -1,12 +1,12 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title KimiK3-Lite Desktop Studio Setup
+title Orcha Setup
 
 set "MISSING=0"
 where ollama.exe >nul 2>nul
 if errorlevel 1 (
-  echo [!] Ollama chua duoc cai.
+  echo [!] Ollama chua duoc cai. Ollama chi bat buoc neu dung local desktop models.
   where winget.exe >nul 2>nul
   if errorlevel 1 (
     echo     Cai Ollama tu https://ollama.com/download
@@ -38,6 +38,6 @@ if "%MISSING%"=="1" (
 )
 
 cscript //nologo "%~dp0Create Desktop Shortcut.vbs" >nul 2>nul
-echo [OK] Moi truong da san sang. Model se duoc cai trong giao dien Studio.
-start "" wscript.exe "%~dp0KimiK3 Studio.vbs"
+echo [OK] Orcha da san sang. Local model co the cai trong giao dien Model local.
+start "" wscript.exe "%~dp0Orcha.vbs"
 exit /b 0
