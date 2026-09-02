@@ -4,9 +4,9 @@ Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 root = fso.GetParentFolderName(WScript.ScriptFullName)
 desktop = sh.SpecialFolders("Desktop")
-Set link = sh.CreateShortcut(desktop & "\KimiK3-Lite Studio.lnk")
+Set link = sh.CreateShortcut(desktop & "\Orcha.lnk")
 link.TargetPath = "wscript.exe"
-link.Arguments = """" & root & "\KimiK3 Studio.vbs"""
+link.Arguments = """" & root & "\Orcha.vbs"""
 link.WorkingDirectory = root
-link.Description = "KimiK3-Lite Desktop Studio"
+link.Description = "Orcha Autonomous Work Platform"
 link.Save
