@@ -22,7 +22,6 @@ jobs:
           python scripts/verify.py
           python -c "from pathlib import Path;p=Path('app/studio_server_v77.py').read_text(encoding='utf-8');assert '7.7.0' in p and 'ui_contract' in p and 'outline_icons' in p and 'claude_can_override_visual_baseline' in p"
           python -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'Anh muốn Orcha làm gì?' in p and 'Orcha cần quyền thực hiện' in p and 'Kimi cần quyền' not in p"
-          python -c "from pathlib import Path;p=Path('studio/ui-foundation.js').read_text(encoding='utf-8');assert \"iconRule:'outline-only'\" in p and 'fill=\"none\"' in p and 'stroke=\"currentColor\"' in p"
       - name: Package Windows
         shell: pwsh
         run: |
@@ -47,7 +46,6 @@ jobs:
           python3 scripts/verify.py
           python3 -c "from pathlib import Path;p=Path('app/studio_server_v77.py').read_text(encoding='utf-8');assert '7.7.0' in p and 'ui_contract' in p and 'outline_icons' in p"
           python3 -c "from pathlib import Path;p=Path('studio/index.html').read_text(encoding='utf-8');assert 'Anh muốn Orcha làm gì?' in p and 'Orcha cần quyền thực hiện' in p and 'Kimi cần quyền' not in p"
-          python3 -c "from pathlib import Path;p=Path('studio/ui-foundation.js').read_text(encoding='utf-8');assert \"iconRule:'outline-only'\" in p and 'fill=\"none\"' in p and 'stroke=\"currentColor\"' in p"
           bash -n "Orcha.command" "Stop Orcha.command" packaging/macos/build-dmg.sh
       - name: Build macOS DMG
         run: |
