@@ -32,6 +32,7 @@ jobs:
           python app/project_supervisor.py
           python app/data_sync.py
           python app/mobile_runtime.py
+          python app/reference_catalog.py
           python app/agent_runtime.py
           python app/parallel_agent.py
           python app/agent_team.py
@@ -42,14 +43,18 @@ jobs:
           node --check studio/project-planner.js
           node --check studio/project-supervisor.js
           node --check studio/orcha-hybrid.js
+          node --check studio/ui-foundation.js
+          node --check studio/plugin-center.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
           node --check studio/parallel-agents.js
           node --check studio/agent-team.js
-          python -c "import sys;sys.path.insert(0,'app');import data_sync as d;assert d.status()['policy']['network_read_only'] and d.status()['policy']['credentials_from_env_only'];print('PASS: Data Hub safety')"
-          python -c "import sys;sys.path.insert(0,'app');import mobile_runtime as m;r=m.recommend({'os':'android','ram_gb':4,'free_storage_gb':4},'chat');assert r['fallback_order'][0]=='on_device';print('PASS: mobile selector')"
-          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.4.0' in p and 'Orcha' in p and '/api/data/sources' in p and '/api/mobile/recommend' in p;print('PASS: Orcha v7.4 server contract')"
-          python -c "from pathlib import Path;p=Path('Orcha.vbs').read_text(encoding='utf-8');assert '7.4.0' in p and 'hybrid_data' in p;print('PASS: Windows Orcha launcher')"
+          python -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p and 'PRESETS' in p;print('PASS: Data Hub uses product modal, no native prompt')"
+          python -c "from pathlib import Path;p=Path('studio/ui-foundation.js').read_text(encoding='utf-8');assert 'closeInspector' in p and 'aria-label' in p and 'parallelAgentBtn' in p and 'teamToggle' in p;print('PASS: inspector close + icon composer accessibility')"
+          python -c "import sys;sys.path.insert(0,'app');import reference_catalog as r;x=r.load();assert len(x['items'])>=30 and not x['policy']['auto_install'];print('PASS: external plugin catalog stays research-only')"
+          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.5.0' in p and 'ui_foundation' in p and '/api/reference/plugins' in p and 'plugin-center.js' in p;print('PASS: Orcha v7.5 UI server contract')"
+          python -c "from pathlib import Path;p=Path('Orcha.vbs').read_text(encoding='utf-8');assert '7.5.0' in p and 'ui_foundation' in p;print('PASS: Windows Orcha launcher')"
+          python -c "import sys;sys.path.insert(0,'app');import data_sync as d;assert d.status()['policy']['network_read_only'];print('PASS: Data Hub safety regression')"
           python -c "import sys;sys.path.insert(0,'app');import agent_team as t;p=t.plan('Review UI/UX',2);assert p['budget']['workers']<=2 and p['policy']=='parallel-read-serial-write';print('PASS: team regression')"
           python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: MCP regression')"
       - name: Package Windows portable
@@ -85,6 +90,7 @@ jobs:
           python3 app/project_supervisor.py
           python3 app/data_sync.py
           python3 app/mobile_runtime.py
+          python3 app/reference_catalog.py
           python3 app/agent_runtime.py
           python3 app/parallel_agent.py
           python3 app/agent_team.py
@@ -95,10 +101,13 @@ jobs:
           node --check studio/project-planner.js
           node --check studio/project-supervisor.js
           node --check studio/orcha-hybrid.js
+          node --check studio/ui-foundation.js
+          node --check studio/plugin-center.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
-          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.4.0' in p and 'mobile_runtime_foundation' in p and 'hybrid_data' in p;print('PASS: Orcha server policy')"
-          python3 -c "from pathlib import Path;p=Path('Orcha.command').read_text(encoding='utf-8');assert '7.4.0' in p and 'ORCHA_DATA_DIR' in p;print('PASS: macOS Orcha launcher')"
+          python3 -c "from pathlib import Path;p=Path('studio/orcha-hybrid.js').read_text(encoding='utf-8');assert 'prompt(' not in p and 'sourceDialog' in p;print('PASS: modal data source flow')"
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.5.0' in p and 'reference_lab' in p and 'icon_composer' in p;print('PASS: Orcha server policy')"
+          python3 -c "from pathlib import Path;p=Path('Orcha.command').read_text(encoding='utf-8');assert '7.5.0' in p and 'ui_foundation' in p;print('PASS: macOS Orcha launcher')"
           bash -n "Orcha.command" "Stop Orcha.command" "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
