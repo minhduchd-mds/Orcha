@@ -11,7 +11,7 @@ const ICONS={
  panel:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>',
  refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18.2 9A7 7 0 0 0 6.6 6.6L4 9m16 6-2.6 2.4A7 7 0 0 1 5.8 15"/></svg>'
 };
-function iconButton(el,icon,label){if(!el)return;el.classList.add('icon-action');el.innerHTML=ICONS[icon]||'';el.setAttribute('aria-label',label);el.title=label;el.dataset.uiIconized='1'}
+function iconButton(el,icon,label){if(!el||el.dataset.uiIconized==='1')return;el.classList.add('icon-action');el.innerHTML=ICONS[icon]||'';el.setAttribute('aria-label',label);el.title=label;el.dataset.uiIconized='1'}
 function patchComposer(){
  iconButton($('attachProject'),'plus','Thêm project hoặc tài liệu');
  iconButton($('skillPicker'),'skill','Kỹ năng');
@@ -39,8 +39,8 @@ function patchBrand(){
 }
 function patchAccessibility(){
  document.querySelectorAll('button:not([type])').forEach(b=>b.type='button');
- document.querySelectorAll('dialog').forEach(d=>{d.addEventListener('click',e=>{if(e.target===d&&d.dataset.dismissible!=='false')d.close()})});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('inspector-focus'))document.body.classList.remove('inspector-focus')});
+ document.querySelectorAll('dialog').forEach(d=>{if(d.dataset.uiDismissBound==='1')return;d.dataset.uiDismissBound='1';d.addEventListener('click',e=>{if(e.target===d&&d.dataset.dismissible!=='false')d.close()})});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('inspector-focus'))document.body.classList.remove('inspector-focus')},{once:true});
 }
 function ensure(){patchComposer();patchInspector();patchBrand();patchAccessibility()}
 const mo=new MutationObserver(()=>patchComposer());mo.observe(document.documentElement,{childList:true,subtree:true});
