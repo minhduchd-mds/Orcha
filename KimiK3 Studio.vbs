@@ -12,7 +12,7 @@ Function ServerReady()
   r.Open "GET", url & "health", False
   r.Send
   body = r.ResponseText
-  ServerReady = (Err.Number = 0 And r.Status = 200 And InStr(1, body, "7.0.0", 1) > 0 And InStr(1, body, "deepseek_harness_patterns", 1) > 0)
+  ServerReady = (Err.Number = 0 And r.Status = 200 And InStr(1, body, "7.2.0", 1) > 0 And InStr(1, body, "autonomous_project_planner", 1) > 0)
   Err.Clear
   On Error GoTo 0
 End Function
@@ -41,7 +41,7 @@ Else
   ok = True
 End If
 If Not ok Then
-  MsgBox "KimiK3-Lite Studio v7.0 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "KimiK3-Lite"
+  MsgBox "KimiK3-Lite Studio v7.2 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "KimiK3-Lite"
   WScript.Quit 1
 End If
 edge = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
