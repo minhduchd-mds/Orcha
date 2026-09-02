@@ -2,6 +2,19 @@
 
 > Product name from v7.4 onward: **Orcha**. Older tags/releases may still contain the historical **KimiK3-Lite** name; those artifacts are not rewritten.
 
+## v7.5.0 — UI Foundation + Reference Lab
+
+- Add Inspector close/reopen control with persisted visibility state and responsive drawer behavior.
+- Convert dense composer actions to icon-first controls with tooltip/`aria-label`, including Skill, Agent, Parallel Agent and Agent Team.
+- Remove browser-native `prompt()` from Data Hub source creation; replace with a structured modal, validation, cancel/save states and preset cards.
+- Add Data Hub reference presets for AI Templates Plugins, Sindre Sorhus Awesome and Anthropic Claude Code Frontend Design.
+- Add **Extensions / Reference Lab** with searchable plugin/pattern catalog. It is discovery-only and never auto-installs or executes external code.
+- Index the current top-level plugin/marketplace names surfaced by AI Templates and an Awesome discovery topic map.
+- Add independently authored `orcha-frontend-design` skill: deliberate visual identity, icon toolbar rules, product dialogs, accessibility, reduced motion and self-critique.
+- Add UI polish layer: stronger focus states, calmer spacing, micro-transitions, reduced-motion support and narrow-screen Inspector behavior.
+- Normalize legacy model product-name output to Orcha at the response surface so old local Modelfiles do not leak the retired name into chat.
+- Windows/macOS launcher and package contract move to v7.5 with CI gates for modal flow, icon accessibility and reference-catalog safety.
+
 ## v7.4.0 — Orcha Rebrand + Hybrid Data + Mobile Runtime Foundation
 
 - Rebrand product-facing UI/docs/package naming to **Orcha — Autonomous Work Platform**.
