@@ -26,14 +26,14 @@ if ! curl -fsS "http://127.0.0.1:11434/api/tags" >/dev/null 2>&1 && [ -d "/Appli
 if ! python3 "$ROOT/scripts/desktop_control.py" health --port "$PORT"; then
   python3 "$ROOT/scripts/desktop_control.py" stop --port "$PORT" || true
   sleep 0.5
-  nohup python3 "$ROOT/app/studio_server_v70.py" --host 127.0.0.1 --port "$PORT" --profile balanced >"$HOME/Library/Logs/Orcha.log" 2>&1 &
+  nohup python3 "$ROOT/app/studio_server_v77.py" --host 127.0.0.1 --port "$PORT" --profile balanced >"$HOME/Library/Logs/Orcha.log" 2>&1 &
 fi
 ready=false
 for _ in $(seq 1 60); do
   if python3 "$ROOT/scripts/desktop_control.py" health --port "$PORT"; then ready=true; break; fi
   sleep 0.25
 done
-if [ "$ready" != true ]; then osascript -e 'display alert "Orcha" message "Không khởi động được runtime v7.6." as critical' || true; exit 1; fi
+if [ "$ready" != true ]; then osascript -e 'display alert "Orcha" message "Không khởi động được runtime v7.7." as critical' || true; exit 1; fi
 if [ -d "/Applications/Google Chrome.app" ]; then open -na "Google Chrome" --args --app="$URL"; elif [ -d "/Applications/Microsoft Edge.app" ]; then open -na "Microsoft Edge" --args --app="$URL"; else open "$URL"; fi
 LAUNCH
 chmod +x "$MACOS/Orcha"
@@ -44,8 +44,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>Orcha</string>
 <key>CFBundleDisplayName</key><string>Orcha</string>
 <key>CFBundleIdentifier</key><string>app.orcha.desktop</string>
-<key>CFBundleVersion</key><string>7.6.0</string>
-<key>CFBundleShortVersionString</key><string>7.6.0</string>
+<key>CFBundleVersion</key><string>7.7.0</string>
+<key>CFBundleShortVersionString</key><string>7.7.0</string>
 <key>CFBundleExecutable</key><string>Orcha</string>
 <key>LSMinimumSystemVersion</key><string>12.0</string>
 <key>NSHighResolutionCapable</key><true/>

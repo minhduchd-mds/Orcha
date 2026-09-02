@@ -11,7 +11,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('action',choices=['health','stop']);parser.add_argument('--port',type=int,default=11435);args=parser.parse_args();base='http://127.0.0.1:'+str(args.port)
     try:
         health=request(base,'health')
-        if args.action=='health':return 0 if health.get('ok') and health.get('product')=='Orcha' and health.get('version')=='7.6.0' and health.get('api_security') else 1
+        if args.action=='health':return 0 if health.get('ok') and health.get('product')=='Orcha' and health.get('version')=='7.7.0' and health.get('api_security') and health.get('ui_contract') and health.get('outline_icons') else 1
         if health.get('product')!='Orcha' and not health.get('version'):return 1
         try:token=request(base,'api/session').get('token')
         except urllib.error.HTTPError as error:

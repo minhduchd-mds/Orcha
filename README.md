@@ -1,4 +1,4 @@
-# Orcha v7.5 — Autonomous Work Platform
+# Orcha v7.7 — Autonomous Work Platform
 
 **Turn goals into completed work.**
 
@@ -23,16 +23,22 @@ ORCHA
 Category: **Autonomous Work Platform**  
 Operating principle: **local-first, hybrid-capable, permission-gated**.
 
-## UI Foundation v7.5
+## UI Contract v7.7
 
-v7.5 tập trung làm Orcha thành một workspace có chất lượng sản phẩm thay vì tập hợp các control kỹ thuật:
+Orcha giữ visual language warm-dark đã hình thành từ UI Kimi-era trong `studio/styles.css`; đây là baseline bắt buộc, không phải một theme tạm thời.
 
-- Inspector có nút đóng/mở lại và nhớ trạng thái;
-- ở viewport hẹp Inspector trở thành drawer thay vì ép nhỏ vùng chat;
-- composer chuyển action dày đặc sang icon-first, có tooltip và `aria-label`;
-- focus-visible và reduced-motion được hỗ trợ;
-- Data Hub bỏ browser-native `prompt()` và dùng modal có label, validation, error, cancel/save;
-- assistant surface chuẩn hóa product name thành **Orcha** ngay cả khi local Modelfile cũ còn identity lịch sử.
+- palette, density, radius và workspace layout hiện hữu là nguồn ưu tiên;
+- `ui-foundation.css` phải kế thừa token canonical thay vì tạo palette song song;
+- Anthropic Claude Code `frontend-design` được dùng cho hierarchy, typography discipline, structure, copy, restraint, responsive, focus và self-critique nhưng **không được tự đổi visual identity của Orcha**;
+- icon product UI dùng **outline SVG only**: `fill=none`, `stroke=currentColor`, stroke 1.8, round cap/join;
+- không thêm emoji/Unicode làm icon hệ thống mới;
+- product-facing chat/UI chỉ dùng tên **Orcha**;
+- Inspector có close/reopen path, focus-visible và reduced-motion được giữ;
+- Data Hub dùng product modal, không browser-native `prompt()`.
+
+Contract chi tiết: `docs/ORCHA-UI-CONTRACT.md`.
+
+Skill mặc định cho tạo/sửa frontend: `orcha-frontend-design`. Skill này khóa thứ tự ưu tiên: user brief → Orcha visual baseline → existing component patterns → Claude quality rules → experimentation.
 
 ### Extensions / Reference Lab
 
@@ -46,9 +52,7 @@ Nguồn nghiên cứu/preset hiện tại:
 
 Reference catalog chỉ lưu tên, tag và pattern dùng để nghiên cứu. `auto_install=false` và `execute_external_code=false`; Permission Engine vẫn là authority cho write action.
 
-Orcha có thêm skill độc lập `orcha-frontend-design` để áp dụng các nguyên tắc thiết kế phù hợp mà không sao chép UI/source của upstream.
-
-## Kiến trúc v7.5
+## Kiến trúc v7.7
 
 ```text
 Goal
@@ -60,7 +64,7 @@ Autonomous Planner
 Task DAG
  ↓
 Project Supervisor
- ├─ read-only task → auto execute → verify → done
+ ├─ read-only task → execute on explicit run/tick → verify → done
  └─ write task → Approval Inbox → Permission Engine → explicit execution
  ↓
 Agent Runtime
@@ -72,9 +76,9 @@ Skills / MCP / Computer / Design Agent
  ↓
 Model Router
  ├─ Desktop local (Ollama)
- ├─ Mobile on-device
- ├─ Trusted desktop peer
- └─ Private remote provider
+ ├─ Mobile on-device selector
+ ├─ Trusted desktop peer target
+ └─ Private remote provider target
 
 Data Hub
  ├─ JSON API
@@ -84,12 +88,11 @@ Data Hub
       ↓ scheduled read-only sync
    local evidence cache
 
-Reference Lab
- ├─ plugin/pattern catalog
- ├─ Awesome discovery map
- └─ design references
-      ↓ research only
-   no external code execution
+UI Contract
+ ├─ Kimi-derived Orcha visual baseline
+ ├─ Claude frontend quality rules (subordinate)
+ ├─ outline icon registry
+ └─ product-facing Orcha copy gate
 ```
 
 ## Data Hub — tự cập nhật dữ liệu nhiều nguồn
@@ -108,9 +111,10 @@ Hỗ trợ hiện tại:
 - trạng thái lần sync gần nhất;
 - source enable/pause;
 - scheduler nền chỉ thực hiện **network read**;
-- reference presets cho các nguồn nghiên cứu UI/plugin.
+- reference presets cho các nguồn nghiên cứu UI/plugin;
+- SSRF/private-network/credential redirect guards từ v7.6.
 
-Credential không lưu trực tiếp trong source JSON. Header bí mật được tham chiếu qua biến môi trường (`headers_env`).
+Credential không lưu trực tiếp trong source JSON. Header bí mật được tham chiếu qua biến môi trường (`ORCHA_SOURCE_*`).
 
 Data Hub **không tự POST/PUT/DELETE ra nguồn ngoài**. Đây là data-ingestion read lane, tách khỏi Permission Engine của write tools.
 
@@ -125,7 +129,7 @@ API:
 
 ## Mobile Runtime
 
-Mục tiêu của Orcha Mobile không phải ép desktop Ollama chạy trực tiếp trên iPhone/Android. Mobile Runtime chọn execution path phù hợp thiết bị:
+Mục tiêu của Orcha Mobile không phải ép desktop Ollama chạy trực tiếp trên iPhone/Android. Mobile Runtime selector chọn execution path phù hợp thiết bị:
 
 ```text
 Task trên mobile
@@ -140,15 +144,7 @@ Mobile Model Selector
  └─ defer nếu privacy strict mà không thể local
 ```
 
-Foundation hiện tại có model selector cho iOS/iPadOS/Android và cân nhắc:
-
-- RAM;
-- storage còn trống;
-- battery;
-- thermal state;
-- task type;
-- model đã cài;
-- privacy mode.
+Foundation hiện tại cân nhắc RAM, storage, battery, thermal state, task type, model đã cài và privacy mode.
 
 Runtime mobile dự kiến dùng các backend phù hợp như **llama.cpp / MLC / ExecuTorch**, và có thể có Core ML adapter trên Apple platforms. Ollama tag desktop không được coi là package chạy trực tiếp trên mobile; model phải được quantize/build đúng runtime.
 
@@ -157,22 +153,15 @@ API:
 - `GET /api/mobile/models`
 - `POST /api/mobile/recommend`
 
-Ví dụ policy:
-
-- máy 3–4 GB: ưu tiên model ~270M–600M;
-- máy 6 GB+: có thể dùng lớp ~1.5B Q4 nếu storage/thermal cho phép;
-- screenshot/vision nếu thiết bị yếu → trusted desktop peer hoặc private provider;
-- `privacy=strict` → không tự đẩy dữ liệu ra remote, có thể `defer`.
-
-> v7.5 vẫn là Mobile Runtime selector/API foundation; chưa tuyên bố đã ship native iOS/Android app, peer transport hay mobile inference package hoàn chỉnh.
+> Mobile Runtime hiện vẫn là selector/API foundation; chưa tuyên bố đã ship native iOS/Android app, trusted-peer transport hay mobile inference package hoàn chỉnh.
 
 ## Project + Supervisor
 
-Project lưu goal, task queue, dependency, approval, checkpoint và resume. Planner tự tạo milestone/task, gắn Skill/Model/Agent strategy và budget. Supervisor chỉ tự chạy task read-only.
+Project lưu goal, task queue, dependency, approval, checkpoint và resume. Planner tự tạo milestone/task, gắn Skill/Model/Agent strategy và budget. Supervisor chỉ có read-only auto lane khi người dùng gọi `tick/run`; không phải daemon tự chạy liên tục.
 
 Safety invariant:
 
-- background Supervisor không tự chạy write side-effect;
+- Supervisor không tự chạy write side-effect;
 - Project Approval không bypass Permission Engine;
 - retry tự động chỉ dành cho read-only task;
 - task chỉ `done` sau verification gate;
@@ -218,8 +207,6 @@ Virtual Context 1M không có nghĩa model attention trực tiếp 1M token.
 Capability metadata là routing metadata; benchmark runtime được tách riêng. KII là operational heuristic, không phải IQ.
 
 ## Environment
-
-Biến mới:
 
 ```text
 ORCHA_DATA_DIR

@@ -22,7 +22,7 @@ Sub StopOldServer()
 End Sub
 If Not ServerReady() Then
   StopOldServer
-  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v70.py"" --profile balanced --port 11435"""
+  cmd = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\app\studio_server_v77.py"" --profile balanced --port 11435"""
   sh.Run cmd, 0, False
   ok = False
   For i = 1 To 60
@@ -33,7 +33,7 @@ Else
   ok = True
 End If
 If Not ok Then
-  MsgBox "Orcha v7.6 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "Orcha"
+  MsgBox "Orcha v7.7 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "Orcha"
   WScript.Quit 1
 End If
 edge = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
