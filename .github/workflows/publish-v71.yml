@@ -1,0 +1,70 @@
+name: Publish v7.1.0
+
+on:
+  push:
+    branches: [release/v7.1.0]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Windows source
+        shell: pwsh
+        run: |
+          python -m py_compile app/studio_server_v70.py app/project_workspace.py app/harness_runtime.py app/hermes_runtime.py app/agent_team.py app/parallel_agent.py app/mcp_gateway.py
+          python app/project_workspace.py
+          node --check studio/project-workspace.js
+      - name: Package Windows
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v7-Windows | Out-Null
+          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v7-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\KimiK3-Lite-v7-Windows -DestinationPath dist\KimiK3-Lite-v7-Windows-Portable.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/KimiK3-Lite-v7-Windows-Portable.zip
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify macOS source
+        run: |
+          python3 -m py_compile app/studio_server_v70.py app/project_workspace.py app/harness_runtime.py app/hermes_runtime.py app/agent_team.py app/parallel_agent.py app/mcp_gateway.py
+          python3 app/project_workspace.py
+          node --check studio/project-workspace.js
+      - name: Build DMG
+        run: ./packaging/macos/build-dmg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/KimiK3-Lite-v7-macOS.dmg
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish GitHub Release v7.1.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mv release-assets/KimiK3-Lite-v7-Windows-Portable.zip release-assets/KimiK3-Lite-v7.1.0-Windows-Portable.zip
+          mv release-assets/KimiK3-Lite-v7-macOS.dmg release-assets/KimiK3-Lite-v7.1.0-macOS.dmg
+          gh release create v7.1.0 release-assets/* --target 00ddd54492b3b0b5f35941b2da5e6927a76032bd --generate-notes --title 'KimiK3-Lite Studio v7.1.0'
