@@ -2,6 +2,22 @@
 
 > Product name from v7.4 onward: **Orcha**. Older tags/releases may still contain the historical **KimiK3-Lite** name; those artifacts are not rewritten.
 
+## v7.6.0 — Production Hardening & Reliability
+
+- Selectively merge the verified hardening workspace onto v7.5 without overwriting UI Foundation, Data Hub modal, Reference Lab or `orcha-frontend-design`.
+- Add loopback-only API security with Host/Origin/Fetch-Site guards, JSON/body limits and `X-Orcha-Token` session authentication for POST requests.
+- Add same-origin authenticated Studio transport and token-aware Windows/macOS desktop control.
+- Harden Permission Engine: global policy is the ceiling; once grants bind to the exact session/run/action/arguments and are consumed atomically.
+- Move Agent Runtime to action → observation → re-plan; failed/denied/cancelled tools cannot be reported as completed work.
+- Add transactional project/storage semantics, runtime DATA lease, DAG validation, idempotent plan materialization and interrupted-state recovery without replaying side effects.
+- Harden Supervisor/Harness execution, request reservation/idempotency, evidence gates and explicit write execution while keeping Permission Engine authoritative.
+- Add persistent MCP stdio pooling, `isError` preservation, schema validation, stderr bounds and serialized writes; side effects are never auto-retried.
+- Partition Context/RAG by project and bound Working Context/inference budgets; Virtual Context remains searchable storage rather than native attention.
+- Harden model routing, Data Hub SSRF/credential/private-network behavior, Mobile Runtime edge cases, Computer launch allowlist and AutoCAD rollback identity.
+- Add SHA-256 backup/restore validation, keyboard/focus/permission-dialog accessibility guards and responsive navigation.
+- Make `scripts/verify.py` the shared Windows/macOS verification gate; integrated v7.6 runs 26 module self-tests plus the hardening regression suite before packaging.
+- Restore the generic build/release workflow after the v7.5 one-off release workflow was accidentally merged into `main`.
+
 ## v7.5.0 — UI Foundation + Reference Lab
 
 - Add Inspector close/reopen control with persisted visibility state and responsive drawer behavior.
