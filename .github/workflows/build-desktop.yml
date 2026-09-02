@@ -1,4 +1,4 @@
-name: Build Desktop Packages
+name: Build Orcha Desktop Packages
 
 on:
   push:
@@ -30,6 +30,8 @@ jobs:
           python app/project_workspace.py
           python app/project_planner.py
           python app/project_supervisor.py
+          python app/data_sync.py
+          python app/mobile_runtime.py
           python app/agent_runtime.py
           python app/parallel_agent.py
           python app/agent_team.py
@@ -39,29 +41,30 @@ jobs:
           node --check studio/project-workspace.js
           node --check studio/project-planner.js
           node --check studio/project-supervisor.js
+          node --check studio/orcha-hybrid.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
           node --check studio/parallel-agents.js
           node --check studio/agent-team.js
-          python -c "import sys;sys.path.insert(0,'app');import project_planner as p;x=p.plan('Audit UI/UX và cập nhật thiết kế',4);assert x['policy']['write_requires_approval'];print('PASS: planner safety')"
-          python -c "from pathlib import Path;p=Path('app/project_supervisor.py').read_text(encoding='utf-8');assert 'auto_read_only' in p and 'permission_engine_authoritative' in p and 'write_background_execution' not in p;print('PASS: supervisor safety contract')"
-          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.3.0' in p and 'project_executor_supervisor' in p and '/supervisor' in p;print('PASS: v7.3 server contract')"
-          python -c "from pathlib import Path;p=Path('KimiK3 Studio.vbs').read_text(encoding='utf-8');assert '7.3.0' in p and 'project_executor_supervisor' in p;print('PASS: Windows launcher v7.3')"
+          python -c "import sys;sys.path.insert(0,'app');import data_sync as d;assert d.status()['policy']['network_read_only'] and d.status()['policy']['credentials_from_env_only'];print('PASS: Data Hub safety')"
+          python -c "import sys;sys.path.insert(0,'app');import mobile_runtime as m;r=m.recommend({'os':'android','ram_gb':4,'free_storage_gb':4},'chat');assert r['fallback_order'][0]=='on_device';print('PASS: mobile selector')"
+          python -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.4.0' in p and 'Orcha' in p and '/api/data/sources' in p and '/api/mobile/recommend' in p;print('PASS: Orcha v7.4 server contract')"
+          python -c "from pathlib import Path;p=Path('Orcha.vbs').read_text(encoding='utf-8');assert '7.4.0' in p and 'hybrid_data' in p;print('PASS: Windows Orcha launcher')"
           python -c "import sys;sys.path.insert(0,'app');import agent_team as t;p=t.plan('Review UI/UX',2);assert p['budget']['workers']<=2 and p['policy']=='parallel-read-serial-write';print('PASS: team regression')"
           python -c "import sys;sys.path.insert(0,'app');import mcp_transport as m;r=m.probe({'command':'@python','args':['{root}/mcp_servers/computer_server.py']},5);assert r['ok'] and r['count']>=6,r;print('PASS: MCP regression')"
       - name: Package Windows portable
         if: github.event_name != 'pull_request'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force dist\KimiK3-Lite-v7-Windows | Out-Null
-          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','KimiK3 Studio.vbs','Stop KimiK3 Studio.vbs','Create Desktop Shortcut.vbs','.kimik3ignore')
-          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\KimiK3-Lite-v7-Windows -Recurse -Force } }
-          Compress-Archive -Path dist\KimiK3-Lite-v7-Windows -DestinationPath dist\KimiK3-Lite-v7-Windows-Portable.zip -Force
+          New-Item -ItemType Directory -Force dist\Orcha-v7-Windows | Out-Null
+          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','Orcha.vbs','Orcha.command','KimiK3 Studio.vbs','KimiK3 Studio.command','.kimik3ignore')
+          foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\Orcha-v7-Windows -Recurse -Force } }
+          Compress-Archive -Path dist\Orcha-v7-Windows -DestinationPath dist\Orcha-v7-Windows-Portable.zip -Force
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v7-Windows-Portable
-          path: dist/KimiK3-Lite-v7-Windows-Portable.zip
+          name: Orcha-v7-Windows-Portable
+          path: dist/Orcha-v7-Windows-Portable.zip
 
   macos:
     runs-on: macos-latest
@@ -80,6 +83,8 @@ jobs:
           python3 app/project_workspace.py
           python3 app/project_planner.py
           python3 app/project_supervisor.py
+          python3 app/data_sync.py
+          python3 app/mobile_runtime.py
           python3 app/agent_runtime.py
           python3 app/parallel_agent.py
           python3 app/agent_team.py
@@ -89,19 +94,20 @@ jobs:
           node --check studio/project-workspace.js
           node --check studio/project-planner.js
           node --check studio/project-supervisor.js
+          node --check studio/orcha-hybrid.js
           node --check studio/model-manager.js
           node --check studio/design-agent.js
-          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.3.0' in p and 'auto_read_only_tasks' in p and 'write_background_execution' in p;print('PASS: supervisor server policy')"
-          python3 -c "from pathlib import Path;p=Path('KimiK3 Studio.command').read_text(encoding='utf-8');assert '7.3.0' in p and 'project_executor_supervisor' in p;print('PASS: macOS launcher v7.3')"
-          bash -n "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
+          python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.4.0' in p and 'mobile_runtime_foundation' in p and 'hybrid_data' in p;print('PASS: Orcha server policy')"
+          python3 -c "from pathlib import Path;p=Path('Orcha.command').read_text(encoding='utf-8');assert '7.4.0' in p and 'ORCHA_DATA_DIR' in p;print('PASS: macOS Orcha launcher')"
+          bash -n "Orcha.command" "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
         run: ./packaging/macos/build-dmg.sh
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'
         with:
-          name: KimiK3-Lite-v7-macOS-DMG
-          path: dist/KimiK3-Lite-v7-macOS.dmg
+          name: Orcha-v7-macOS-DMG
+          path: dist/Orcha-v7-macOS.dmg
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -115,9 +121,9 @@ jobs:
           merge-multiple: true
       - name: Version release assets
         run: |
-          mv release-assets/KimiK3-Lite-v7-Windows-Portable.zip "release-assets/KimiK3-Lite-${GITHUB_REF_NAME}-Windows-Portable.zip"
-          mv release-assets/KimiK3-Lite-v7-macOS.dmg "release-assets/KimiK3-Lite-${GITHUB_REF_NAME}-macOS.dmg"
+          mv release-assets/Orcha-v7-Windows-Portable.zip "release-assets/Orcha-${GITHUB_REF_NAME}-Windows-Portable.zip"
+          mv release-assets/Orcha-v7-macOS.dmg "release-assets/Orcha-${GITHUB_REF_NAME}-macOS.dmg"
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --title "KimiK3-Lite Studio ${GITHUB_REF_NAME}"
+        run: gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --title "Orcha ${GITHUB_REF_NAME}"
