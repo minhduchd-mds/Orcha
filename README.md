@@ -1,4 +1,4 @@
-# Orcha v7.4 — Autonomous Work Platform
+# Orcha v7.5 — Autonomous Work Platform
 
 **Turn goals into completed work.**
 
@@ -23,7 +23,32 @@ ORCHA
 Category: **Autonomous Work Platform**  
 Operating principle: **local-first, hybrid-capable, permission-gated**.
 
-## Kiến trúc v7.4
+## UI Foundation v7.5
+
+v7.5 tập trung làm Orcha thành một workspace có chất lượng sản phẩm thay vì tập hợp các control kỹ thuật:
+
+- Inspector có nút đóng/mở lại và nhớ trạng thái;
+- ở viewport hẹp Inspector trở thành drawer thay vì ép nhỏ vùng chat;
+- composer chuyển action dày đặc sang icon-first, có tooltip và `aria-label`;
+- focus-visible và reduced-motion được hỗ trợ;
+- Data Hub bỏ browser-native `prompt()` và dùng modal có label, validation, error, cancel/save;
+- assistant surface chuẩn hóa product name thành **Orcha** ngay cả khi local Modelfile cũ còn identity lịch sử.
+
+### Extensions / Reference Lab
+
+Reference Lab là lớp **discovery-only** để Orcha nghiên cứu pattern từ hệ sinh thái ngoài mà không tự cài hoặc thực thi code bên thứ ba.
+
+Nguồn nghiên cứu/preset hiện tại:
+
+- AI Templates Plugins — taxonomy Skills / Agents / Commands / Hooks / MCP / LSP;
+- Sindre Sorhus Awesome — discovery map đa lĩnh vực;
+- Anthropic Claude Code Frontend Design — nguyên tắc visual direction, hierarchy, restraint, accessibility và self-critique.
+
+Reference catalog chỉ lưu tên, tag và pattern dùng để nghiên cứu. `auto_install=false` và `execute_external_code=false`; Permission Engine vẫn là authority cho write action.
+
+Orcha có thêm skill độc lập `orcha-frontend-design` để áp dụng các nguyên tắc thiết kế phù hợp mà không sao chép UI/source của upstream.
+
+## Kiến trúc v7.5
 
 ```text
 Goal
@@ -58,13 +83,20 @@ Data Hub
  └─ Text/HTTP source
       ↓ scheduled read-only sync
    local evidence cache
+
+Reference Lab
+ ├─ plugin/pattern catalog
+ ├─ Awesome discovery map
+ └─ design references
+      ↓ research only
+   no external code execution
 ```
 
 ## Data Hub — tự cập nhật dữ liệu nhiều nguồn
 
-Orcha v7.4 có Data Hub foundation để tránh giới hạn “chỉ biết dữ liệu local”. Source registry được lưu local và có thể tự đồng bộ theo lịch.
+Orcha có Data Hub foundation để tránh giới hạn “chỉ biết dữ liệu local”. Source registry được lưu local và có thể tự đồng bộ theo lịch.
 
-Hỗ trợ foundation hiện tại:
+Hỗ trợ hiện tại:
 
 - JSON HTTP API;
 - RSS;
@@ -75,7 +107,8 @@ Hỗ trợ foundation hiện tại:
 - cache document local;
 - trạng thái lần sync gần nhất;
 - source enable/pause;
-- scheduler nền chỉ thực hiện **network read**.
+- scheduler nền chỉ thực hiện **network read**;
+- reference presets cho các nguồn nghiên cứu UI/plugin.
 
 Credential không lưu trực tiếp trong source JSON. Header bí mật được tham chiếu qua biến môi trường (`headers_env`).
 
@@ -88,6 +121,7 @@ API:
 - `POST /api/data/sources`
 - `POST /api/data/sync`
 - `POST /api/data/sources/{id}/enabled`
+- `GET /api/reference/plugins`
 
 ## Mobile Runtime
 
@@ -106,7 +140,7 @@ Mobile Model Selector
  └─ defer nếu privacy strict mà không thể local
 ```
 
-Foundation v7.4 có model selector cho iOS/iPadOS/Android và cân nhắc:
+Foundation hiện tại có model selector cho iOS/iPadOS/Android và cân nhắc:
 
 - RAM;
 - storage còn trống;
@@ -129,6 +163,8 @@ Ví dụ policy:
 - máy 6 GB+: có thể dùng lớp ~1.5B Q4 nếu storage/thermal cho phép;
 - screenshot/vision nếu thiết bị yếu → trusted desktop peer hoặc private provider;
 - `privacy=strict` → không tự đẩy dữ liệu ra remote, có thể `defer`.
+
+> v7.5 vẫn là Mobile Runtime selector/API foundation; chưa tuyên bố đã ship native iOS/Android app, peer transport hay mobile inference package hoàn chỉnh.
 
 ## Project + Supervisor
 
@@ -196,7 +232,7 @@ Desktop mặc định:
 - Orcha: `http://127.0.0.1:11435`
 - Ollama: `http://127.0.0.1:11434`
 
-## Release naming từ v7.4
+## Release naming
 
 - `Orcha-vX.Y.Z-Windows-Portable.zip`
 - `Orcha-vX.Y.Z-macOS.dmg`
@@ -208,12 +244,16 @@ Legacy launchers/data path được giữ compatibility trong giai đoạn chuy�
 1. Data Hub adapters: Web/RSS/API → GitHub/Drive/Notion/Slack/Calendar connectors.
 2. Dedup + incremental sync + provenance + freshness score.
 3. Hybrid retrieval: local evidence first, fresh remote evidence when needed.
-4. Mobile companion app: project/task/approval + on-device chat.
+4. Native mobile companion: project/task/approval + on-device chat.
 5. Mobile model package manager + download/evict model theo storage.
 6. Trusted desktop peer: mobile gửi task nặng về máy cá nhân trong LAN/VPN.
 7. Private remote provider fallback có policy theo project.
 8. Cross-device encrypted project sync.
+9. Reference Lab → evaluated/adoptable patterns với license/risk metadata trước mọi tích hợp.
+10. UI screenshot regression + accessibility DOM audit trong release gate.
 
 ## License
 
 Source code của Orcha trong repository tuân theo license của repository. Model weights không được redistribute. Người dùng phải tuân thủ license của từng model/provider/source dữ liệu được cấu hình.
+
+Các nguồn tham khảo UI/plugin được dùng để học pattern hoặc discovery. Orcha không tuyên bố liên kết với các dự án đó và không tự động vendor/install code bên thứ ba.
