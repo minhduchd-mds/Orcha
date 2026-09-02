@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+import storage
 import json, os, time, uuid
 from pathlib import Path
 from typing import Any
 
 ROOT=Path(__file__).resolve().parents[1]
-DATA=Path(os.environ.get('KIMIK3_DATA_DIR',str(ROOT/'data'))).expanduser()
+DATA=storage.DATA
 LOG=DATA/'action_timeline.jsonl'
 
 
 def _ensure(): DATA.mkdir(parents=True,exist_ok=True)
 
+@storage.serialized
 def record(kind:str, session_id:str='default', **fields:Any)->dict:
     _ensure(); item={'id':'act-'+uuid.uuid4().hex[:12],'ts':time.time(),'kind':kind,'session_id':session_id,**fields}
     with LOG.open('a',encoding='utf-8') as f: f.write(json.dumps(item,ensure_ascii=False)+'\n')
@@ -37,3 +39,25 @@ def self_test():
     _ensure(); x=record('test','ci',tool='noop',status='done'); assert find(x['id']); print('PASS: action log')
 
 if __name__=='__main__': self_test()
+
+
+def rollback(action_id,session_id,approved=False):
+    import mcp_gateway as mcp
+    import permission_engine as permissions
+    with storage.transaction():
+        item=find(action_id)
+        if not item or item.get('session_id')!=session_id:raise ValueError('Unknown action for session')
+        rb=item.get('rollback')
+        if not isinstance(rb,dict):raise ValueError('No automatic rollback for this action')
+        if not approved:raise ValueError('Explicit rollback confirmation required')
+        marker=DATA/'rollback-claims'/f'{action_id}.json'
+        if marker.exists():raise ValueError('Rollback already attempted; review the recorded result before another manual operation')
+        tool=next(x for x in mcp.list_tools(session_id) if x['name']==rb['tool'])
+        key='rollback:'+action_id
+        permissions.grant(tool['permission'],'once',60,session_id,key)
+        storage.atomic_json(marker,{'status':'running','created_at':time.time()})
+    result=mcp.call_tool(rb['tool'],rb.get('arguments',{}),session_id,action_key=key)
+    with storage.transaction():
+        storage.atomic_json(marker,{'status':'done' if result.get('ok') else 'error','result':result})
+        mark_rollback(action_id,result,session_id)
+    return result

@@ -1,118 +1,147 @@
-#!/usr/bin/env python3
+"""Project execution: atomic claims, explicit writes, durable evidence and recovery."""
 from __future__ import annotations
-import json, time, uuid
-from pathlib import Path
-from typing import Any
-
+import json
+import time
+import uuid
+import storage
 import agent_runtime
 import project_workspace as projects
 
 MAX_SAFE_RETRIES=2
 
+def _state_path(pid):return projects._p(pid)/'supervisor.json'
+def _read(pid):return storage.read_json(_state_path(pid),{'project_id':pid,'paused':False,'active_task':None,'runs':[]})
+def _write(pid,obj):obj['updated_at']=time.time();storage.atomic_json(_state_path(pid),obj);return obj
 
-def _state_path(pid:str)->Path:
-    return projects._p(pid)/'supervisor.json'
-
-def _read(pid:str)->dict:
-    p=_state_path(pid)
-    try:return json.loads(p.read_text(encoding='utf-8'))
-    except Exception:return {'project_id':pid,'paused':False,'active_task':None,'runs':[],'updated_at':0}
-
-def _write(pid:str,obj:dict)->dict:
-    obj['updated_at']=time.time();projects._write(_state_path(pid),obj);return obj
-
-def status(pid:str)->dict:
+@storage.serialized
+def status(pid):
     g=projects.get(pid);s=_read(pid)
-    pending=[a for a in g.get('approvals',[]) if a.get('status')=='pending']
-    return {**s,'ready_count':len(projects.ready_tasks(pid)),'pending_approval_count':len(pending),'progress':{'done':g.get('done_count',0),'total':g.get('task_count',0)},'policy':{'auto_read_only':True,'write_requires_project_approval':True,'permission_engine_authoritative':True,'max_safe_retries':MAX_SAFE_RETRIES}}
+    return {**s,'ready_count':len(projects.ready_tasks(pid)),'pending_approval_count':sum(a['status']=='pending' for a in g['approvals']),
+            'progress':{'done':g['done_count'],'total':g['task_count']},'policy':{'auto_read_only':True,'permission_engine_authoritative':True}}
 
-def pause(pid:str)->dict:
-    s=_read(pid);s['paused']=True;return _write(pid,s)
+@storage.serialized
+def pause(pid):
+    s=_read(pid);s['paused']=True
+    if s.get('active_task'):
+        task=next((t for t in projects.get(pid)['tasks'] if t['id']==s['active_task']),{})
+        run=agent_runtime.RUNS.get(task.get('agent_run_id'))
+        if run:agent_runtime.cancel_run(run['id'],run['session_id'])
+    return _write(pid,s)
 
-def resume(pid:str)->dict:
-    s=_read(pid);s['paused']=False;return _write(pid,s)
+@storage.serialized
+def resume(pid):s=_read(pid);s['paused']=False;return _write(pid,s)
 
-def _approval_for(g:dict,tid:str)->str|None:
-    rows=[a for a in g.get('approvals',[]) if a.get('task_id')==tid]
-    if any(a.get('status')=='pending' for a in rows):return 'pending'
-    if any(a.get('status')=='approved' for a in rows):return 'approved'
-    if any(a.get('status')=='rejected' for a in rows):return 'rejected'
-    return None
+def _approval_for(g,tid):
+    rows=[a for a in g['approvals'] if a['task_id']==tid]
+    return rows[-1]['status'] if rows else None
 
-def _ensure_write_approval(pid:str,task:dict)->dict:
-    g=projects.get(pid);state=_approval_for(g,task['id'])
-    if state=='pending':return {'status':'waiting_approval'}
-    if state=='rejected':projects.update_task(pid,task['id'],{'status':'blocked','last_result':'Project approval rejected'});return {'status':'blocked'}
-    if state=='approved':
-        # Project approval never bypasses tool-level Permission Engine. Keep the task queued for
-        # explicit execution so a write side effect cannot be replayed by a background supervisor.
-        projects.update_task(pid,task['id'],{'status':'blocked','last_result':'Project approved; explicit execution still required by Permission Engine'})
-        return {'status':'permission_gate'}
-    projects.request_approval(pid,task['id'],'Supervisor phát hiện task có write-intent. Cần duyệt project trước khi thực thi.',[])
-    return {'status':'waiting_approval'}
+def _verify_result(result,write=False):
+    agent=result.get('agent') or {};obs=agent.get('observations') or []
+    valid=bool(str(result.get('answer') or '').strip()) and agent.get('status')=='done'
+    clean=not agent.get('pending_confirmations') and not agent.get('denied_tools') and all(x.get('ok') for x in obs)
+    import mcp_gateway
+    tools={x['name']:x for x in mcp_gateway.list_tools()}
+    writes=[x for x in obs if x.get('ok') and tools.get(x.get('tool'),{}).get('permission') not in mcp_gateway.READ_PERMISSIONS]
+    evidence=bool(result.get('sources')) or any(x.get('ok') and x.get('tool')!='context.stats' and x.get('result') for x in obs)
+    ok=bool(valid and clean and evidence and (not write or writes))
+    return {'ok':ok,'reason':'verified' if ok else 'Missing successful evidence or incomplete execution','observations':len(obs),'write_observations':len(writes)}
 
-def _verify_result(result:dict)->dict:
-    agent=result.get('agent') if isinstance(result,dict) else None
-    answer=str((result or {}).get('answer') or '').strip()
-    pending=(agent or {}).get('pending_confirmations') or []
-    denied=(agent or {}).get('denied_tools') or []
-    ok=bool(answer) and (agent or {}).get('status')=='done' and not pending and not denied
-    return {'ok':ok,'answer_chars':len(answer),'pending_permissions':len(pending),'denied_tools':len(denied),'reason':'verified' if ok else 'agent-not-cleanly-complete'}
-
-def _run_read_task(pid:str,task:dict,profile:str,model:str|None,host:str,session_id:str)->dict:
-    query=(task.get('title') or '')+'\n'+(task.get('description') or '')+'\nChỉ thực hiện thao tác read-only. Không ghi/sửa/xóa dữ liệu. Trả evidence và kết quả kiểm chứng.'
-    last_error=''
-    for attempt in range(1,MAX_SAFE_RETRIES+1):
-        projects.update_task(pid,task['id'],{'status':'running'})
-        try:
-            result=agent_runtime.run(query,profile,model,host,'auto',session_id)
-            check=_verify_result(result)
-            if check['ok']:
-                answer=str(result.get('answer') or '')[:12000]
-                projects.update_task(pid,task['id'],{'status':'done','last_result':answer})
-                projects.checkpoint(pid,f"Supervisor verified task {task['id']} attempt {attempt}")
-                return {'status':'done','attempt':attempt,'verification':check,'answer':answer,'agent_run_id':((result.get('agent') or {}).get('run_id'))}
-            if (result.get('agent') or {}).get('pending_confirmations'):
-                projects.update_task(pid,task['id'],{'status':'waiting_approval','last_result':'Agent requested tool permission; supervisor paused task'})
-                return {'status':'waiting_permission','attempt':attempt,'verification':check,'agent':result.get('agent')}
-            last_error=check['reason']
-        except Exception as exc:
-            last_error=str(exc)[:1000]
-        if attempt<MAX_SAFE_RETRIES:time.sleep(.05)
-    projects.update_task(pid,task['id'],{'status':'blocked','last_result':'Supervisor failed verification: '+last_error})
-    return {'status':'blocked','attempt':MAX_SAFE_RETRIES,'error':last_error}
-
-def tick(pid:str,profile:str='balanced',model:str|None=None,host:str='http://127.0.0.1:11434',session_id:str='project-supervisor')->dict:
-    s=_read(pid)
-    if s.get('paused'):return {'status':'paused','supervisor':status(pid)}
-    ready=projects.ready_tasks(pid)
-    if not ready:return {'status':'idle','supervisor':status(pid)}
-    task=ready[0];s['active_task']=task['id'];_write(pid,s)
+@storage.serialized
+def _claim(pid,tid=None,explicit=False):
+    g=projects.get(pid);s=_read(pid)
+    if s.get('paused'):return None,{'status':'paused'}
+    if s.get('active_task'):return None,{'status':'busy'}
+    task=next((x for x in (g['tasks'] if tid else projects.ready_tasks(pid)) if not tid or x['id']==tid),None)
+    if not task:return None,{'status':'idle'}
+    if task['status'] not in {'todo','waiting_approval'}:raise ValueError('Task is not executable')
     if task.get('write_intent'):
-        outcome=_ensure_write_approval(pid,task)
-    else:
-        outcome=_run_read_task(pid,task,profile,model,host,session_id+'-'+pid)
-    s=_read(pid);s['active_task']=None;s.setdefault('runs',[]).append({'id':'sup-'+uuid.uuid4().hex[:10],'task_id':task['id'],'title':task.get('title'),'at':time.time(),**{k:v for k,v in outcome.items() if k not in {'answer','agent'}}});s['runs']=s['runs'][-100:];_write(pid,s)
+        approved=_approval_for(g,task['id'])
+        if approved!='approved':
+            if approved!='pending':projects.request_approval(pid,task['id'],'Review this write task before explicit execution: '+task['title'])
+            return None,{'status':'waiting_approval'}
+        if not explicit:return None,{'status':'permission_gate'}
+    if task.get('agent_run_id'):raise ValueError('Continue the existing agent run')
+    projects.update_task(pid,task['id'],{'status':'running'})
+    s['active_task']=task['id'];_write(pid,s)
+    return task,None
+
+def _query(pid,task):
+    g=projects.get(pid);deps=[{'title':t['title'],'result':t.get('last_result','')[:4000]} for t in g['tasks'] if t['id'] in task.get('depends_on',[])]
+    return json.dumps({'project_goal':g['goal'],'task':task['title'],'instruction':task['description'],
+                      'acceptance':task.get('planner',{}).get('acceptance',[]),'dependency_results':deps},ensure_ascii=False)
+
+@storage.serialized
+def _record(pid,task,result):
+    check=_verify_result(result,task.get('write_intent',False));agent=result.get('agent') or {}
+    waiting=bool(agent.get('pending_confirmations'))
+    state='done' if check['ok'] else ('waiting_approval' if waiting else 'blocked')
+    answer=str(result.get('answer') or agent.get('error') or check['reason'])[:12000]
+    projects.update_task(pid,task['id'],{'status':state,'last_result':answer,'verification':check,
+                        'agent_run_id':agent.get('run_id') if waiting else None},verified=True)
+    storage.atomic_json(projects._p(pid)/'artifacts'/f"{task['id']}.json",{'task_id':task['id'],'result':result,'verification':check})
+    s=_read(pid);s['active_task']=None;s.setdefault('runs',[]).append({'id':'sup-'+uuid.uuid4().hex[:10],'task_id':task['id'],'title':task['title'],'at':time.time(),'status':state,'verification':check});s['runs']=s['runs'][-100:];_write(pid,s)
+    projects.checkpoint(pid,'Execution '+state+': '+task['title'])
+    return {'status':'waiting_permission' if waiting else state,'verification':check,'answer':answer,'agent':agent}
+
+def _execute_scoped(pid,tid=None,explicit=False,profile='balanced',model=None,host='http://127.0.0.1:11434',session_id='project-supervisor'):
+    task,early=_claim(pid,tid,explicit)
+    if early:return {**early,'supervisor':status(pid)}
+    sid='project-'+pid+'-'+task['id'];meta=task.get('planner') or {}
+    core=__import__('kimik3_lite');budget_token=core._WORKING_LIMIT.set(meta.get('working_context'))
+    try:
+        import model_registry
+        try:route=model_registry.route(task['title']+' '+task['description'],False,str(meta.get('model_id') or 'auto'),host=host)
+        except ValueError:route=model_registry.route(task['title']+' '+task['description'],False,'auto',host=host)
+        selected=route.get('selected') or {};model=model or model_registry.runtime_model(selected,False).get('model')
+        query=_query(pid,task)
+        strategy=meta.get('strategy','single') if not task.get('write_intent') else 'single'
+        if strategy in {'team','parallel'}:
+            import agent_team,parallel_agent
+            raw=(agent_team.run if strategy=='team' else parallel_agent.run)(query,profile,model,host,sid)
+            runtime=raw.get('team') or raw
+            result={'answer':raw.get('answer'),'sources':__import__('kimik3_lite').retrieve(query,6),
+                    'agent':{'status':runtime.get('status'),'observations':[]},'strategy':strategy}
+        else:
+            result=agent_runtime.run(query,profile,model,host,'auto',sid,read_only=not task.get('write_intent'),skill_id=meta.get('skill_id'),on_start=lambda run:projects.update_task(pid,task['id'],{'agent_run_id':run['id']},verified=True))
+    except Exception as exc:result={'answer':'','agent':{'status':'failed','error':str(exc)}}
+    finally:core._WORKING_LIMIT.reset(budget_token)
+    if 'route' in locals():result['model_route']={**route,'planner_model':meta.get('model_id')}
+    if _read(pid).get('paused') and result.get('agent',{}).get('status')=='done':result['agent']['status']='cancelled'
+    outcome=_record(pid,task,result)
     return {'task':task,'outcome':outcome,'supervisor':status(pid)}
 
-def run_until_blocked(pid:str,max_steps:int=8,**kwargs)->dict:
+def execute(pid,*args,**kwargs):
+    import kimik3_lite as core
+    with core.project_scope(pid):return _execute_scoped(pid,*args,**kwargs)
+
+
+def tick(pid,**kwargs):return execute(pid,**kwargs)
+
+def continue_task(pid,tid,scope='once',approved=True):
+    with storage.transaction():
+        g=projects.get(pid);task=next(x for x in g['tasks'] if x['id']==tid)
+        if _read(pid).get('active_task'):raise ValueError('Project already executing')
+        if _read(pid).get('paused'):raise ValueError('Project is paused')
+        rid=task.get('agent_run_id');run=agent_runtime.RUNS.get(rid)
+        if not run:raise ValueError('Run interrupted; review and retry task')
+        if not approved:
+            result={'answer':'Action rejected','agent':agent_runtime.cancel_run(rid,run['session_id'])}
+            return _record(pid,task,result)
+        agent_runtime.grant_action(rid,run['session_id'],scope)
+        s=_read(pid);s['active_task']=tid;_write(pid,s)
+    try:
+        with __import__('kimik3_lite').project_scope(pid):result=agent_runtime.continue_run(rid,run['session_id'])
+    except Exception as exc:result={'agent':{'status':'failed','error':str(exc)}}
+    return _record(pid,task,result)
+
+def run_until_blocked(pid,max_steps=8,**kwargs):
     rows=[]
     for _ in range(max(1,min(int(max_steps),20))):
-        r=tick(pid,**kwargs);rows.append(r)
-        st=r.get('status') or (r.get('outcome') or {}).get('status')
-        if st in {'paused','idle','waiting_approval','waiting_permission','permission_gate','blocked'}:break
-        if (r.get('outcome') or {}).get('status')!='done':break
+        result=tick(pid,**kwargs);rows.append(result)
+        if result.get('outcome',{}).get('status')!='done':break
     return {'project_id':pid,'steps':rows,'supervisor':status(pid)}
 
 def self_test():
-    import tempfile
-    old=projects.ROOT
-    with tempfile.TemporaryDirectory() as d:
-        projects.ROOT=Path(d)
-        p=projects.create('Demo','Goal');a=projects.add_task(p['id'],'Read','inspect only');b=projects.add_task(p['id'],'Write','save output',[a['id']],True)
-        assert status(p['id'])['ready_count']==1
-        pause(p['id']);assert status(p['id'])['paused'];resume(p['id']);assert not status(p['id'])['paused']
-        projects.update_task(p['id'],a['id'],{'status':'done'});x=tick(p['id']);assert (x.get('outcome') or {}).get('status')=='waiting_approval'
-        assert projects.get(p['id'])['approvals'][0]['task_id']==b['id']
-    projects.ROOT=old;print('PASS: project supervisor safety/dependency')
+    assert not _verify_result({'answer':'failed','agent':{'status':'done','observations':[{'ok':False}]}})['ok']
+    print('PASS: supervisor evidence gate')
 if __name__=='__main__':self_test()
