@@ -1,0 +1,20 @@
+/* Responsive navigation, readable supporting text, and visible keyboard focus. */
+:root{--faint:#aaa49c}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid #e9b18d;outline-offset:3px}
+button:disabled{opacity:.55;cursor:wait}
+.brand small,.side-label,.eyebrow,.runtime-card small,.topbar p,.assistant-meta,.privacy,.mini,.metric,.agent-card p,.plan,.action,.mcp-row,.tool-row,.source,.modal-head p,.tag,.mini-btn,.action small,.kii small{font-size:12px}
+.tool-btn,.selected-skill,.top-btn{font-size:12px}.mini-btn{min-height:30px}
+.permission-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
+#navigationToggle,#closeNavigation{display:none;border:1px solid var(--line2);background:var(--panel);border-radius:8px;min-width:40px;min-height:40px}
+#conversation{overflow-wrap:anywhere}.modal{max-height:90dvh;overflow:auto}.inspector{overflow-y:auto}
+@media(max-width:760px){
+ .shell{height:100dvh}.topbar{height:auto;min-height:64px;flex-wrap:wrap;gap:8px;padding:8px 12px}.top-actions{width:100%;margin-left:0;flex-wrap:wrap}.top-actions button,.top-actions select{min-height:36px}
+ #navigationToggle,#closeNavigation{display:block}#closeNavigation{align-self:flex-end}
+ .sidebar{display:none;position:fixed;inset:0 auto 0 0;width:min(300px,88vw);z-index:100;overflow-y:auto;box-shadow:20px 0 0 100vw #0009}
+ .sidebar.navigation-open{display:flex}.sidebar .nav-item{min-height:44px}.sidebar .recent-block{margin-bottom:20px}
+ .inspector{max-width:94vw}.workspace-head,.head-actions{flex-wrap:wrap;gap:10px}.workspace-head h2{font-size:21px}
+ .composer-bar{flex-wrap:wrap}.selected-skill{max-width:110px}.welcome{margin-top:3vh}.welcome h2{font-size:22px}.user-bubble{max-width:95%}
+ .project-columns,.model-grid,.hybrid-grid,.two-fields{grid-template-columns:minmax(0,1fr)!important}
+ .project-layout{grid-template-columns:minmax(0,1fr)!important}.model-summary{display:flex;flex-wrap:wrap}.project-workspace{padding:12px}
+ input,textarea,select{max-width:100%}.conversation{padding-bottom:195px}#workView{overflow-x:hidden}.work-grid{min-width:0}.step-card{min-width:0}.step-card p{overflow-wrap:anywhere}
+}

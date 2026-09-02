@@ -1,29 +1,21 @@
 Option Explicit
-Dim sh, fso, root, url, cmd, ok, i, edge, chrome, appCmd
+Dim sh, fso, root, url, cmd, ok, i, edge, chrome, appCmd, ctl
 Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 root = fso.GetParentFolderName(WScript.ScriptFullName)
 url = "http://127.0.0.1:11435/"
+ctl = "cmd.exe /d /s /c """"" & root & "\scripts\_python.cmd"" """ & root & "\scripts\desktop_control.py"" "
 Function ServerReady()
   On Error Resume Next
-  Dim r, body
-  Set r = CreateObject("WinHttp.WinHttpRequest.5.1")
-  r.SetTimeouts 500, 500, 500, 500
-  r.Open "GET", url & "health", False
-  r.Send
-  body = r.ResponseText
-  ServerReady = (Err.Number = 0 And r.Status = 200 And InStr(1, body, "7.5.0", 1) > 0 And InStr(1, body, "Orcha", 1) > 0 And InStr(1, body, "ui_foundation", 1) > 0)
+  Dim rc
+  rc = sh.Run(ctl & "health --port 11435""", 0, True)
+  ServerReady = (Err.Number = 0 And rc = 0)
   Err.Clear
   On Error GoTo 0
 End Function
 Sub StopOldServer()
   On Error Resume Next
-  Dim r
-  Set r = CreateObject("WinHttp.WinHttpRequest.5.1")
-  r.SetTimeouts 500, 500, 500, 500
-  r.Open "POST", url & "api/app/shutdown", False
-  r.SetRequestHeader "Content-Type", "application/json"
-  r.Send "{}"
+  sh.Run ctl & "stop --port 11435""", 0, True
   WScript.Sleep 500
   Err.Clear
   On Error GoTo 0
@@ -41,7 +33,7 @@ Else
   ok = True
 End If
 If Not ok Then
-  MsgBox "Orcha v7.5 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "Orcha"
+  MsgBox "Orcha v7.6 khong khoi dong duoc. Hay chay INSTALL.bat hoac kiem tra Python/Ollama.", 16, "Orcha"
   WScript.Quit 1
 End If
 edge = sh.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"

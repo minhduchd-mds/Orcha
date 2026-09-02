@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import time, uuid
+import storage
+import hashlib
+import json
 from typing import Any
 
 import model_registry
@@ -37,6 +40,9 @@ TEMPLATES={
 def _strategy(text:str,write:bool,ram:float)->str:
     t=text.casefold()
     if write:return 'single'
+    learned=__import__('self_improvement').recommend(model_registry.classify_task(text),ram)
+    selected=learned['selected']
+    if learned['scores'][selected]['runs']>=3:return selected
     if ram>=6 and any(x in t for x in TEAM_WORDS):return 'team'
     if ram>=4 and any(x in t for x in ('audit','review','phân tích','so sánh','nghiên cứu')):return 'parallel'
     return 'single'
@@ -63,21 +69,46 @@ def plan(goal:str,ram_gb:float|None=None)->dict:
     tasks=[]
     for i,(title,desc,write) in enumerate(template):
         deps=[] if i==0 else [f'p{i}']
-        tasks.append(_task(title,desc,i,deps,goal,ram,write or any(w in f'{title} {desc}'.casefold() for w in WRITE_WORDS)))
+        tasks.append(_task(title,desc,i,deps,goal,ram,write))
     milestones=[{'id':'m1','name':'Khám phá & lập kế hoạch','task_ids':[x['plan_id'] for x in tasks[:2]]},
                 {'id':'m2','name':'Thực thi & kiểm chứng','task_ids':[x['plan_id'] for x in tasks[2:]]}]
     return {'id':'plan-'+uuid.uuid4().hex[:10],'goal':goal,'created_at':time.time(),'task_type':kind,'system_ram_gb':ram,
       'milestones':milestones,'tasks':tasks,'policy':{'write_requires_approval':True,'auto_permission_escalation':False,'auto_red_tools':False},
       'estimate':{'tasks':len(tasks),'write_tasks':sum(x['write_intent'] for x in tasks),'max_parallel':2 if ram>=4 else 1}}
 
+@storage.serialized
 def materialize(projects:Any,pid:str,p:dict)->dict:
-    mapping={};created=[]
-    for x in p.get('tasks',[]):
-        deps=[mapping[d] for d in x.get('depends_on',[]) if d in mapping]
-        t=projects.add_task(pid,x['title'],x['description'],deps,bool(x.get('write_intent')))
-        mapping[x['plan_id']]=t['id'];created.append({**t,'planner':{k:x.get(k) for k in ('task_type','skill_id','model_id','strategy','ram_budget_gb','working_context','approval_required')}})
-    projects.checkpoint(pid,'Autonomous planner materialized plan '+str(p.get('id')))
+    project=projects.get(pid)
+    if p.get('goal') != project.get('goal'): raise ValueError('Plan goal does not match this project')
+    rows=p.get('tasks')
+    if not isinstance(rows,list) or not 1<=len(rows)<=50: raise ValueError('Plan requires 1-50 tasks')
+    known=set(); ordered=[]; pending=list(rows)
+    ids=[x.get('plan_id') for x in rows]
+    if len(set(ids))!=len(ids) or not all(isinstance(x,str) and x for x in ids):raise ValueError('Duplicate or invalid plan task IDs')
+    for x in rows:
+        if not x.get('title') or not isinstance(x.get('description'),str):raise ValueError('Invalid task')
+        if any(d not in ids for d in x.get('depends_on',[])):raise ValueError('Missing dependency')
+    while pending:
+        ready=[x for x in pending if set(x.get('depends_on',[]))<=known]
+        if not ready:raise ValueError('Cyclic plan dependency')
+        for x in ready:ordered.append(x);known.add(x['plan_id']);pending.remove(x)
+    signature=hashlib.sha256(json.dumps(p,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+    old=[t for t in project['tasks'] if t.get('planner',{}).get('plan_signature')==signature]
+    if old:return {'plan_id':p.get('id'),'project_id':pid,'created':old,'replayed':True}
+    mapping={};created=[];now=time.time()
+    for x in ordered:
+        meta={k:x.get(k) for k in ('task_type','skill_id','model_id','strategy','ram_budget_gb','working_context','approval_required','acceptance')}
+        meta.update(goal=p['goal'],plan_signature=signature,plan_task_id=x['plan_id'])
+        tid='task-'+uuid.uuid4().hex[:10]
+        task={'id':tid,'title':x['title'].strip(),'description':x['description'].strip(),'status':'todo',
+              'depends_on':[mapping[d] for d in x.get('depends_on',[])],'write_intent':bool(x.get('write_intent')),
+              'created_at':now,'updated_at':now,'attempts':0,'last_result':'','planner':meta,'agent_run_id':None,'verification':None}
+        mapping[x['plan_id']]=tid;created.append(task)
+    tasks=project['tasks']+created
+    projects._write(projects._p(pid)/'tasks.json',tasks);projects._sync(pid,tasks)
+    projects.checkpoint(pid,'Planner materialized '+str(p.get('id')))
     return {'plan_id':p.get('id'),'project_id':pid,'created':created,'mapping':mapping}
+
 
 def self_test():
     p=plan('Audit UI/UX và cập nhật thiết kế responsive',4)
