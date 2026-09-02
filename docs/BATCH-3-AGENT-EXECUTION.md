@@ -1,6 +1,8 @@
-# Batch 3 — Agent Execution & Observable Local Automation
+# Orcha — Agent Execution & Observable Automation
 
-KimiK3-Lite v6.2 adds a permission-gated execution loop on top of the v6.1 Skill + MCP foundation.
+> Historical foundation: this capability entered the product during the pre-Orcha v6.2 phase. Current product name is **Orcha**.
+
+Orcha uses a permission-gated execution loop on top of the Skill + MCP foundation.
 
 ## Runtime flow
 
@@ -10,11 +12,11 @@ The model can only choose registered tools. It cannot create executable commands
 
 ## Action Timeline
 
-Each local action is appended to `data/action_timeline.jsonl`. Sensitive typed text is redacted and stored only as character count. AutoCAD create/dimension results can expose an explicit rollback descriptor using `autocad.entity.delete`.
+Each local action is appended to the Orcha data directory. Sensitive typed text is redacted and stored only as character count. AutoCAD create/dimension results can expose an explicit rollback descriptor using `autocad.entity.delete`.
 
 ## Computer Control
 
-Windows Computer MCP now returns stable `element_id` values (`hwnd:<id>`) and supports `computer.ui.find`. Click/type prefer an element id; coordinates remain a fallback.
+Windows Computer MCP returns stable `element_id` values (`hwnd:<id>`) and supports `computer.ui.find`. Click/type prefer an element id; coordinates remain a fallback.
 
 ## AutoCAD
 
@@ -22,8 +24,8 @@ Structured tools support layer creation, line, lightweight polyline, text, circl
 
 ## Skill Builder
 
-Studio can create safe `SKILL.md` files. Skill IDs are validated and permissions are limited to `auto`, `confirm`, or `deny`. Skill Builder does not write executable code.
+Orcha can create safe `SKILL.md` files. Skill IDs are validated and permissions are limited to `auto`, `confirm`, or `deny`. Skill Builder does not write executable code.
 
 ## KII Benchmark
 
-The local benchmark measures runtime readiness: retrieval, skill coverage, tooling, safety policy, memory and context. It is not an IQ score or an academic model benchmark.
+KII measures operational runtime readiness such as retrieval, skill coverage, tooling, safety policy, memory and context. It is not an IQ score or an academic model benchmark.

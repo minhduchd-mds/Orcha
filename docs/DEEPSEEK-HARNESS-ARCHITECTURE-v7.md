@@ -1,6 +1,6 @@
-# KimiK3-Lite v7 — DeepSeek Harness Architecture Study
+# Orcha v7 — DeepSeek Harness Architecture Study
 
-> Status: architecture adaptation, not a fork. KimiK3-Lite does **not** copy DeepSeek Harness source code. It adopts selected architecture contracts in a small Python/vanilla-JS form suitable for a low-RAM local desktop runtime.
+> Status: architecture adaptation, not a fork. Orcha does **not** copy DeepSeek Harness source code. It adopts selected architecture contracts in a small Python/vanilla-JS form suitable for a low-RAM, local-first runtime.
 
 ## Sources reviewed
 
@@ -18,7 +18,7 @@ The v7 design was derived from the upstream README and architecture documentatio
 - `docs/subsystems/compaction.md` — bounded context, tool-result pruning and safe surface replacement.
 - `docs/development.md` — focused local gates plus exhaustive CI, explicit release blockers and generated-contract checks.
 
-DeepSeek Harness is rapidly changing; its README explicitly warns of compatibility-breaking changes. We therefore implement stable concepts rather than importing its runtime or tying KimiK3-Lite to Cordis/Node.
+DeepSeek Harness is rapidly changing; its README explicitly warns of compatibility-breaking changes. Orcha therefore implements stable concepts rather than importing its runtime or tying the product to Cordis/Node.
 
 ## Architecture decisions for v7
 
@@ -26,31 +26,31 @@ DeepSeek Harness is rapidly changing; its README explicitly warns of compatibili
 
 `app/harness_runtime.py` writes an append-only JSONL event stream per session. Durable facts use explicit event types such as `turn/start`, `step/start`, `user/message`, `request/header`, `request/error`, `assistant/message`, and `turn/end`.
 
-The existing Hermes layer remains live orchestration/control metadata. The Harness log is the durable execution trace used for replay/debugging and crash accounting.
+The Hermes layer remains live orchestration/control metadata. The Harness log is the durable execution trace used for replay/debugging and crash accounting.
 
 ### 2. Explicit request identity
 
-Retries are identified by `request_id`, not by matching user text. This fixes a v6.9 bug where a legitimate repeated sentence within a short time window could be suppressed as a duplicate.
+Retries are identified by `request_id`, not by matching user text. This fixes an earlier issue where a legitimate repeated sentence within a short time window could be suppressed as a duplicate.
 
 Missing request ids are generated server-side. Supplied ids are validated. Completed responses are persisted in an idempotency cache keyed by canonical session id + request id.
 
 ### 3. Crash-safe checkpoints
 
-Each request receives a persisted run checkpoint written via temporary-file + atomic replace. On v7 startup, a checkpoint still marked `running` is closed as `interrupted`; it is never silently deleted and never automatically resumes a possible side effect.
+Each request receives a persisted run checkpoint written via temporary-file + atomic replace. On startup, a checkpoint still marked `running` is closed as `interrupted`; it is never silently deleted and never automatically resumes a possible side effect.
 
 This mirrors the important upstream distinction between durable history and live execution ownership.
 
 ### 4. Capability seams without arbitrary plugin execution
 
-`CapabilityRegistry` provides replaceable in-process capability registrations and hooks with reversible disposal. v7 deliberately does **not** auto-load arbitrary third-party Python code. External Skills/MCP remain subject to their existing validation and Permission Engine.
+`CapabilityRegistry` provides replaceable in-process capability registrations and hooks with reversible disposal. Orcha deliberately does **not** auto-load arbitrary third-party Python code. External Skills/MCP remain subject to validation and Permission Engine policy.
 
-This preserves the useful “everything is replaceable” direction without turning a local desktop app into an untrusted code loader.
+This preserves the useful “everything is replaceable” direction without turning the desktop app into an untrusted code loader.
 
 ### 5. Guarded tool results
 
 Large tool results are normalized and spilled to local disk. The model-facing observation receives bounded head/tail evidence plus a local spill reference instead of injecting an unbounded result into Working Context.
 
-Tool argument/result boundaries remain JSON-oriented. Computer typing remains redacted by the existing Action Log.
+Tool argument/result boundaries remain JSON-oriented. Computer typing remains redacted by the Action Log.
 
 ### 6. No blind retry of side effects
 
@@ -66,15 +66,15 @@ Tool plans are deduplicated by stable tool-name + canonical-arguments signature.
 
 `app/verification_engine.py` executes only fixed argv recipes owned by the application, with `shell=False`, bounded timeouts and captured output. The model cannot provide an arbitrary shell command to the verifier.
 
-`fast` verifies Python compilation plus core Harness/model/Hermes and JS syntax. `full` adds the existing local self-tests. GitHub Actions remains the release authority for Windows/macOS packaging.
+`fast` verifies Python compilation plus core Harness/model/Hermes and JS syntax. `full` adds local self-tests. GitHub Actions remains the release authority for Windows/macOS packaging.
 
 ### 9. Harness Inspector
 
-Studio exposes a compact Harness Inspector showing durable-event, recovery, spill and stall-guard state, recent runs and a user-triggered `Verify fast` action. This is operational evidence, not an intelligence score.
+Orcha exposes a compact Harness Inspector showing durable-event, recovery, spill and stall-guard state, recent runs and a user-triggered `Verify fast` action. This is operational evidence, not an intelligence score.
 
 ### 10. Security authority remains unchanged
 
-The existing Permission Engine remains authoritative:
+The Permission Engine remains authoritative:
 
 - Green/read-only can auto-run.
 - Yellow/write/input requires confirmation according to policy.
@@ -82,9 +82,18 @@ The existing Permission Engine remains authoritative:
 - No model-generated shell is introduced by the v7 Harness layer.
 - Agent state is not automatically resumed across a restart when a side effect could be ambiguous.
 
+## Hybrid extension in Orcha v7.4
+
+Orcha is now **local-first, not local-only**. The Harness safety model also applies when adding hybrid capabilities:
+
+- Data Hub background sync is a network **read-only** lane.
+- External source credentials are referenced from environment variables, not persisted inline.
+- Mobile Runtime may choose on-device, trusted desktop peer or private remote provider based on device/privacy policy.
+- A hybrid fallback must not silently bypass project privacy or Permission Engine rules.
+
 ## Known boundaries
 
-v7 is intentionally not a full DeepSeek Harness port. It does not implement Cordis, the upstream bundle/profile format, PTC, arbitrary plugin code, remote sandbox providers, or a full event-derived model-history rewrite. KimiK3-Lite keeps its Python runtime, Ollama models, existing Virtual Context/RAG, Skills, MCP, Hermes control plane and low-RAM design.
+Orcha v7 is intentionally not a full DeepSeek Harness port. It does not implement Cordis, the upstream bundle/profile format, PTC, arbitrary plugin code, remote sandbox providers, or a full event-derived model-history rewrite. Orcha keeps its Python runtime, Ollama-compatible local models, Virtual Context/RAG, Skills, MCP, Hermes control plane and low-RAM design.
 
 A future v7.x can progressively make the Harness session log the single canonical transcript, then retire duplicated history storage after migration tests prove replay equivalence.
 
@@ -92,17 +101,17 @@ A future v7.x can progressively make the Harness session log the single canonica
 
 A v7 PR is mergeable only after:
 
-1. Python compile passes for v7 and all inherited servers.
+1. Python compile passes for current and inherited servers.
 2. Harness request-id, retry taxonomy, stall guard and capability registry self-tests pass.
 3. Agent runtime dedupe/stall self-test passes.
-4. UI JavaScript syntax checks pass, including `harness.js`.
-5. Text-only UI/UX composite routing still resolves to Balanced.
-6. Malformed API `limit` values fail safe to defaults.
+4. UI JavaScript syntax checks pass.
+5. Text-only UI/UX composite routing still resolves to its companion model.
+6. Malformed API values fail safe to defaults.
 7. Existing Team/Parallel/MCP regression gates remain green.
-8. Windows launcher points to `studio_server_v70.py`.
-9. macOS launcher/DMG points to `studio_server_v70.py`.
-10. Main build emits Windows Portable + macOS DMG.
+8. Windows launcher points to the current Orcha server runtime.
+9. macOS launcher/DMG points to the current Orcha server runtime.
+10. Main build emits Orcha Windows Portable + macOS DMG.
 
 ## Attribution and license
 
-Architecture study source: DeepSeek AI, **DeepSeek Harness**, MIT License. This repository's v7 implementation is independently written. If future work ports actual upstream source instead of ideas/contracts, the copied portions must carry the upstream copyright/license notice and be tracked explicitly in third-party notices.
+Architecture study source: DeepSeek AI, **DeepSeek Harness**, MIT License. This repository's implementation is independently written. If future work ports actual upstream source instead of ideas/contracts, copied portions must carry the upstream copyright/license notice and be tracked explicitly in third-party notices.

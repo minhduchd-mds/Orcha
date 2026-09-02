@@ -6,8 +6,10 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
+import data_sync
 import harness_runtime as harness
 import kimik3_lite as core
+import mobile_runtime
 import project_workspace as projects
 import project_planner as planner
 import project_supervisor as supervisor
@@ -22,18 +24,25 @@ def _limit(query: dict, key: str, default: int, maximum: int) -> int:
 class H70(v69.H69):
     def _index70(self):
         p=Path(core.ROOT)/'studio'/'index.html';text=p.read_text(encoding='utf-8')
-        text=text.replace('</head>','<link rel="stylesheet" href="/parallel-agents.css"><link rel="stylesheet" href="/agent-team.css"><link rel="stylesheet" href="/final-intelligence.css"><link rel="stylesheet" href="/hermes.css"><link rel="stylesheet" href="/harness.css"><link rel="stylesheet" href="/project-workspace.css"><link rel="stylesheet" href="/project-planner.css"><link rel="stylesheet" href="/project-supervisor.css"></head>')
-        text=text.replace('</body>','<script src="/parallel-agents.js"></script><script src="/agent-team.js"></script><script src="/final-intelligence.js"></script><script src="/hermes.js"></script><script src="/harness.js"></script><script src="/project-workspace.js"></script><script src="/project-planner.js"></script><script src="/project-supervisor.js"></script></body>')
-        text=text.replace('Local Workspace · v6.4','Local Workspace · v7.3').replace('Local Workspace · v6.8','Local Workspace · v7.3').replace('Local Workspace · v7.0','Local Workspace · v7.3').replace('Local Workspace · v7.2','Local Workspace · v7.3')
+        text=text.replace('</head>','<link rel="stylesheet" href="/parallel-agents.css"><link rel="stylesheet" href="/agent-team.css"><link rel="stylesheet" href="/final-intelligence.css"><link rel="stylesheet" href="/hermes.css"><link rel="stylesheet" href="/harness.css"><link rel="stylesheet" href="/project-workspace.css"><link rel="stylesheet" href="/project-planner.css"><link rel="stylesheet" href="/project-supervisor.css"><link rel="stylesheet" href="/orcha-hybrid.css"></head>')
+        text=text.replace('</body>','<script src="/parallel-agents.js"></script><script src="/agent-team.js"></script><script src="/final-intelligence.js"></script><script src="/hermes.js"></script><script src="/harness.js"></script><script src="/project-workspace.js"></script><script src="/project-planner.js"></script><script src="/project-supervisor.js"></script><script src="/orcha-hybrid.js"></script></body>')
+        for old in ('Local Workspace · v6.4','Local Workspace · v6.8','Local Workspace · v7.0','Local Workspace · v7.2','Local Workspace · v7.3'):
+            text=text.replace(old,'Autonomous Work Platform · v7.4')
+        text=text.replace('KimiK3 Lite · Local Workspace','Orcha · Autonomous Work Platform').replace('<b>KimiK3 Lite</b>','<b>Orcha</b>').replace('<div class="logo">K</div>','<div class="logo">O</div>')
+        text=text.replace('Anh muốn Kimi làm gì?','Anh muốn Orcha làm gì?').replace('Kimi cần quyền thực hiện','Orcha cần quyền thực hiện')
+        text=text.replace('Local only','Hybrid · local-first').replace('Local intelligence','Orcha intelligence')
         raw=text.encode('utf-8');self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Cache-Control','no-cache');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_GET(self):
         q=urlsplit(self.path);path=q.path;query=parse_qs(q.query)
         if path in {'/','/index.html'}:return self._index70()
-        if path=='/health':return self.send_json(200,{'ok':True,'version':'7.3.0','hermes_foundation':True,'deepseek_harness_patterns':True,'event_sourced_runs':True,'crash_recovery':True,'tool_result_spill':True,'verification_recipes':True,'project_workspace':True,'autonomous_project_planner':True,'project_executor_supervisor':True,'auto_read_only_tasks':True,'write_background_execution':False,'persistent_tasks':True,'resume':True,'approval_inbox':True,'checkpoints':True,'planner_write_requires_approval':True,'permission_engine_authoritative':True,'harness':harness.status()})
+        if path=='/health':return self.send_json(200,{'ok':True,'product':'Orcha','category':'Autonomous Work Platform','version':'7.4.0','local_first':True,'hybrid_data':True,'mobile_runtime_foundation':True,'hermes_foundation':True,'deepseek_harness_patterns':True,'event_sourced_runs':True,'crash_recovery':True,'tool_result_spill':True,'verification_recipes':True,'project_workspace':True,'autonomous_project_planner':True,'project_executor_supervisor':True,'auto_read_only_tasks':True,'write_background_execution':False,'persistent_tasks':True,'resume':True,'approval_inbox':True,'checkpoints':True,'planner_write_requires_approval':True,'permission_engine_authoritative':True,'data_sync':data_sync.status(),'harness':harness.status()})
         if path=='/api/harness/status':return self.send_json(200,harness.status())
         if path=='/api/harness/events':return self.send_json(200,harness.events(str(query.get('session',['default'])[0]),_limit(query,'limit',100,500)))
         if path=='/api/harness/runs':return self.send_json(200,harness.runs(_limit(query,'limit',50,500)))
         if path=='/api/harness/recipes':return self.send_json(200,[{'id':x['id'],'label':x['label']} for x in verifier.recipes(core.ROOT)])
+        if path=='/api/data/status':return self.send_json(200,data_sync.status())
+        if path=='/api/data/sources':return self.send_json(200,data_sync.list_sources())
+        if path=='/api/mobile/models':return self.send_json(200,mobile_runtime.catalog())
         if path=='/api/projects':return self.send_json(200,projects.list_projects())
         if path.startswith('/api/projects/'):
             parts=[x for x in path.split('/') if x]
@@ -55,6 +64,20 @@ class H70(v69.H69):
                 if path=='/api/harness/verify':return self.send_json(200,verifier.verify(core.ROOT,str(b.get('profile') or 'fast')))
                 if path=='/api/harness/recover':return self.send_json(200,{'recovered':harness.recover_incomplete()})
             except Exception as exc:return self.send_json(409,{'error':str(exc)})
+        if path=='/api/data/sources':
+            try:b=self.body();return self.send_json(201,data_sync.save_source(b))
+            except Exception as e:return self.send_json(409,{'error':str(e)})
+        if path=='/api/data/sync':
+            try:
+                b=self.body();sid=str(b.get('source_id') or '')
+                return self.send_json(200,data_sync.sync_source(sid) if sid else {'results':data_sync.sync_due(10**20)})
+            except Exception as e:return self.send_json(409,{'error':str(e)})
+        if path.startswith('/api/data/sources/') and path.endswith('/enabled'):
+            try:b=self.body();sid=[x for x in path.split('/') if x][3];return self.send_json(200,data_sync.set_enabled(sid,bool(b.get('enabled'))))
+            except Exception as e:return self.send_json(409,{'error':str(e)})
+        if path=='/api/mobile/recommend':
+            try:b=self.body();return self.send_json(200,mobile_runtime.recommend(b.get('device') or {},str(b.get('task') or ''),bool(b.get('has_image')),str(b.get('privacy') or 'balanced')))
+            except Exception as e:return self.send_json(409,{'error':str(e)})
         if path=='/api/planner/plan':
             try:b=self.body();return self.send_json(200,planner.plan(str(b.get('goal') or ''),b.get('ram_gb')))
             except Exception as e:return self.send_json(409,{'error':str(e)})
@@ -84,5 +107,5 @@ class H70(v69.H69):
         return super().do_POST()
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=v69._legacy_v64().legacy.profiles().get(a.profile) or v69._legacy_v64().legacy.profiles()['balanced'];v69._legacy_v64().legacy.workflows.ensure();recovered=harness.recover_incomplete();v69._legacy_v64().legacy.start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H70);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];srv.model_mode='auto';print(f'KimiK3-Lite v7.3 Studio http://{a.host}:{a.port} · recovered={len(recovered)}');srv.serve_forever()
+    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=v69._legacy_v64().legacy.profiles().get(a.profile) or v69._legacy_v64().legacy.profiles()['balanced'];v69._legacy_v64().legacy.workflows.ensure();recovered=harness.recover_incomplete();v69._legacy_v64().legacy.start_ollama(a.ollama);data_sync.Scheduler().start();srv=ThreadingHTTPServer((a.host,a.port),H70);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];srv.model_mode='auto';print(f'Orcha v7.4 http://{a.host}:{a.port} · recovered={len(recovered)} · hybrid-data=on');srv.serve_forever()
 if __name__=='__main__':main()

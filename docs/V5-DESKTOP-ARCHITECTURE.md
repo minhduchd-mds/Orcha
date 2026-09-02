@@ -1,8 +1,10 @@
-# KimiK3-Lite v5 Desktop Architecture
+# Orcha — Desktop Architecture Foundation
+
+> Historical foundation: this document describes the lightweight desktop shell introduced before the Orcha rebrand.
 
 ## Mục tiêu
 
-Tạo trải nghiệm phần mềm local cho người dùng phổ thông mà không buộc thao tác trong CMD/PowerShell, đồng thời giữ footprint thấp cho máy RAM 4 GB.
+Tạo trải nghiệm phần mềm desktop cho người dùng phổ thông mà không buộc thao tác trong CMD/PowerShell, đồng thời giữ footprint thấp cho máy RAM 4 GB.
 
 ## Desktop shell
 
@@ -10,15 +12,19 @@ Windows dùng Edge/Chrome App Mode, backend Python chạy ẩn. macOS dùng app 
 
 ## Backend
 
-- Python standard library: ThreadingHTTPServer, urllib, subprocess.
-- Ollama nạp đúng một model local theo profile.
-- Adaptive Intelligence tái sử dụng model theo nhiều pass tuần tự.
-- RAG và workflow chạy tuần tự để kiểm soát RAM.
+- Python standard library: `ThreadingHTTPServer`, `urllib`, `subprocess`.
+- Ollama có thể nạp model local theo profile.
+- Orcha orchestration tái sử dụng model theo nhiều pass/agent strategy.
+- RAG, workflow, Planner và Supervisor kiểm soát Working Context/RAM.
 
 ## First-run
 
-Studio → kiểm tra Ollama → kiểm tra model → chọn MAX/Balanced/Quality → ollama pull/create → Ready.
+Orcha → kiểm tra runtime → kiểm tra model/provider → chọn profile → cài/pull nếu cần → Ready.
 
 ## Data
 
-Có thể override bằng `KIMIK3_DATA_DIR`. Bản macOS lưu dưới `~/Library/Application Support/KimiK3-Lite Studio`.
+Biến mới là `ORCHA_DATA_DIR`. `KIMIK3_DATA_DIR` chỉ được giữ như alias migration. macOS mặc định dùng `~/Library/Application Support/Orcha`.
+
+## v7.4 extension
+
+Desktop không còn là execution target duy nhất. Orcha bổ sung Data Hub cho fresh external evidence và Mobile Runtime foundation để chọn on-device/trusted-peer/private-provider theo capability + privacy policy.
