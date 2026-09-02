@@ -57,7 +57,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist\Orcha-v7-Windows | Out-Null
-          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','Orcha.vbs','Orcha.command','KimiK3 Studio.vbs','KimiK3 Studio.command','.kimik3ignore')
+          $items = @('app','mcp_servers','studio','config','skills','knowledge','docs','scripts','README.md','CHANGELOG.md','LICENSE-NOTE.md','WINDOWS-QUICKSTART-V5.md','MACOS-QUICKSTART-V5.md','Modelfile.v3','Modelfile.v3.max','Modelfile.v3.quality','INSTALL.bat','STUDIO.bat','Orcha.vbs','Orcha.command','Stop Orcha.vbs','Stop Orcha.command','Create Desktop Shortcut.vbs','KimiK3 Studio.vbs','KimiK3 Studio.command','.kimik3ignore')
           foreach ($i in $items) { if (Test-Path $i) { Copy-Item $i dist\Orcha-v7-Windows -Recurse -Force } }
           Compress-Archive -Path dist\Orcha-v7-Windows -DestinationPath dist\Orcha-v7-Windows-Portable.zip -Force
       - uses: actions/upload-artifact@v4
@@ -99,7 +99,7 @@ jobs:
           node --check studio/design-agent.js
           python3 -c "from pathlib import Path;p=Path('app/studio_server_v70.py').read_text(encoding='utf-8');assert '7.4.0' in p and 'mobile_runtime_foundation' in p and 'hybrid_data' in p;print('PASS: Orcha server policy')"
           python3 -c "from pathlib import Path;p=Path('Orcha.command').read_text(encoding='utf-8');assert '7.4.0' in p and 'ORCHA_DATA_DIR' in p;print('PASS: macOS Orcha launcher')"
-          bash -n "Orcha.command" "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
+          bash -n "Orcha.command" "Stop Orcha.command" "KimiK3 Studio.command" "Stop KimiK3 Studio.command" "INSTALL-macOS.command" packaging/macos/build-dmg.sh
       - name: Build DMG
         if: github.event_name != 'pull_request'
         run: ./packaging/macos/build-dmg.sh
