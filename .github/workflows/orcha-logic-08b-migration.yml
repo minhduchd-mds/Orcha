@@ -1,0 +1,40 @@
+name: Orcha Logic 0.8B migration
+
+on:
+  push:
+    branches:
+      - feat/orcha-logic-08b
+    paths:
+      - 'scripts/_add_orcha_logic_08b.py'
+      - '.github/workflows/orcha-logic-08b-migration.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/orcha-logic-08b
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply model integration
+        run: python scripts/_add_orcha_logic_08b.py
+      - name: Remove one-shot script
+        run: rm -f scripts/_add_orcha_logic_08b.py
+      - name: Verify brand and runtime
+        run: |
+          python scripts/check_brand.py
+          python scripts/verify.py --fast
+      - name: Commit integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A ':!.github/workflows'
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat(model): add Orcha Logic 0.8B profile'
+          git push origin HEAD:feat/orcha-logic-08b
