@@ -57,13 +57,19 @@ def clean_verify():
     path = ROOT / 'scripts' / 'verify.py'
     if not path.exists():
         return
-    text = path.read_text(encoding='utf-8')
-    text = re.sub(
-        r"\n\s*if re\.search\(r'Orcha\(\?:-Lite\)\?\|Orcha Lite\|\\bOrcha\\b',index,re\.I\):\n\s*raise AssertionError\([^\n]+\)",
-        '',
-        text,
-    )
-    path.write_text(text, encoding='utf-8', newline='\n')
+    lines = path.read_text(encoding='utf-8').splitlines()
+    out=[];skip_next=False
+    for line in lines:
+        if skip_next:
+            if 'raise AssertionError' in line and 'Retired Orcha product name' in line:
+                skip_next=False
+                continue
+            skip_next=False
+        if 'if re.search(' in line and 'index,re.I' in line and 'Orcha' in line:
+            skip_next=True
+            continue
+        out.append(line)
+    path.write_text('\n'.join(out)+'\n', encoding='utf-8', newline='\n')
 
 
 def rename_paths():
