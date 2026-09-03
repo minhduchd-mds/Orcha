@@ -8,9 +8,21 @@
       "size_mb": 241,
       "min_ram_gb": 3,
       "native_context": 32768,
-      "modalities": ["text"],
-      "capabilities": {"chat": 55, "vietnamese": 48, "code": 40, "reasoning": 38, "tools": 35, "vision": 0},
-      "roles": ["fast", "fallback"],
+      "modalities": [
+        "text"
+      ],
+      "capabilities": {
+        "chat": 55,
+        "vietnamese": 48,
+        "code": 40,
+        "reasoning": 38,
+        "tools": 35,
+        "vision": 0
+      },
+      "roles": [
+        "fast",
+        "fallback"
+      ],
       "builtin": true
     },
     {
@@ -20,9 +32,23 @@
       "size_mb": 522,
       "min_ram_gb": 4,
       "native_context": 40960,
-      "modalities": ["text"],
-      "capabilities": {"chat": 72, "vietnamese": 74, "code": 66, "reasoning": 64, "tools": 64, "vision": 0},
-      "roles": ["default", "chat", "rag", "tools"],
+      "modalities": [
+        "text"
+      ],
+      "capabilities": {
+        "chat": 72,
+        "vietnamese": 74,
+        "code": 66,
+        "reasoning": 64,
+        "tools": 64,
+        "vision": 0
+      },
+      "roles": [
+        "default",
+        "chat",
+        "rag",
+        "tools"
+      ],
       "builtin": true
     },
     {
@@ -32,9 +58,22 @@
       "size_mb": 1400,
       "min_ram_gb": 6,
       "native_context": 40960,
-      "modalities": ["text"],
-      "capabilities": {"chat": 82, "vietnamese": 82, "code": 78, "reasoning": 78, "tools": 74, "vision": 0},
-      "roles": ["deep", "code", "planning"],
+      "modalities": [
+        "text"
+      ],
+      "capabilities": {
+        "chat": 82,
+        "vietnamese": 82,
+        "code": 78,
+        "reasoning": 78,
+        "tools": 74,
+        "vision": 0
+      },
+      "roles": [
+        "deep",
+        "code",
+        "planning"
+      ],
       "builtin": true
     },
     {
@@ -45,12 +84,57 @@
       "size_mb": 1500,
       "min_ram_gb": 4,
       "native_context": 2048,
-      "modalities": ["text", "image"],
-      "capabilities": {"chat": 58, "vietnamese": 45, "code": 28, "reasoning": 44, "tools": 40, "vision": 82, "uiux": 86},
-      "roles": ["uiux", "vision", "screenshot", "layout"],
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "capabilities": {
+        "chat": 58,
+        "vietnamese": 45,
+        "code": 28,
+        "reasoning": 44,
+        "tools": 40,
+        "vision": 82,
+        "uiux": 86
+      },
+      "roles": [
+        "uiux",
+        "vision",
+        "screenshot",
+        "layout"
+      ],
       "description": "Vision-first profile for UI screenshots. Visual observations are handed to the Balanced companion for Vietnamese UX reasoning.",
       "builtin": true,
       "composite": true
+    },
+    {
+      "id": "logic-08b",
+      "name": "Orcha Logic 0.8B",
+      "ollama_tag": "orcha-v3-logic-0.8b",
+      "base_tag": "qwen3.5:0.8b",
+      "size_mb": 1024,
+      "min_ram_gb": 4,
+      "native_context": 262144,
+      "modalities": [
+        "text"
+      ],
+      "capabilities": {
+        "chat": 78,
+        "vietnamese": 80,
+        "code": 72,
+        "reasoning": 76,
+        "tools": 74,
+        "vision": 0
+      },
+      "roles": [
+        "chat",
+        "reasoning",
+        "tools",
+        "edge",
+        "planning-lite"
+      ],
+      "description": "0.8B edge reasoning profile on Qwen3.5 with an Orcha-authored public-principles behavior recipe. No proprietary Anthropic weights or private chain-of-thought distillation.",
+      "builtin": true
     }
   ]
 }

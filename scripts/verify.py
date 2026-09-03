@@ -2,6 +2,7 @@
 import argparse
 import ast
 import importlib
+import json
 import os
 from pathlib import Path
 import re
@@ -42,6 +43,8 @@ def main():
     for path in scripts:subprocess.run([node,'--check',str(path)],check=True)
     print(f'PASS: JavaScript syntax ({len(scripts)} files)',flush=True)
     _verify_ui_contract()
+    logic=(ROOT/'Modelfile.logic-0.8b').read_text(encoding='utf-8');assert 'FROM qwen3.5:0.8b' in logic and 'Orcha Logic 0.8B' in logic
+    registry=json.loads((ROOT/'config/models.json').read_text(encoding='utf-8'));assert any(x.get('id')=='logic-08b' for x in registry.get('models',[]))
     if args.fast:return
     with tempfile.TemporaryDirectory(prefix='orcha-verify-') as directory:
         os.environ['ORCHA_DATA_DIR']=directory
