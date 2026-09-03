@@ -1,246 +1,281 @@
-# Orcha v7.7 — Autonomous Work Platform
+# Orcha
 
-**Turn goals into completed work.**
+> **Local-first Autonomous AI Work Platform** — biến một mục tiêu thành kế hoạch, agent execution, tool actions, verification và kết quả có thể kiểm soát.
 
-Orcha là nền tảng AI agent **local-first nhưng không local-only**. Sản phẩm điều phối Project, Planner, Supervisor, Agent Team, Skills, MCP, Data Hub và nhiều model để biến một mục tiêu thành công việc có kế hoạch, thực thi, kiểm chứng và checkpoint.
+Orcha là nền tảng điều phối AI chạy **local-first, hybrid-capable**. Thay vì chỉ chat với một model, Orcha kết hợp **Planner, Supervisor, Agent Team, Skills, MCP tools, Project Context, RAG/Data Hub, Model Router và Permission Engine** để xử lý công việc nhiều bước trên desktop.
 
-> **Ollama runs models. Orcha runs work.**
+**Ollama runs models. Orcha runs work.**
 
-Orcha không phải một model mới và không phải bản nén của Orcha K3. Ollama, Hugging Face, cloud model APIs hoặc runtime mobile đều có thể nằm ở lớp model/provider phía dưới Orcha.
+---
 
-## Định vị
+## Công nghệ chính
 
-```text
-Hugging Face         → model / dataset / ecosystem
-Ollama               → local model runtime
-Cloud providers      → remote model runtime
-Mobile runtimes      → on-device inference
+| Lớp | Công nghệ / vai trò |
+|---|---|
+| Runtime | **Python 3.10+** |
+| Desktop Studio | HTML, CSS, JavaScript, local web runtime |
+| Local LLM | **Ollama** |
+| Model families | Qwen 3 / Qwen 3.5, Gemma 3, Moondream |
+| Agent system | Planner, Supervisor, Single / Parallel / Agent Team |
+| Tool protocol | **MCP — Model Context Protocol** |
+| Knowledge | Local indexing, RAG, Virtual Context, project memory |
+| Data ingestion | JSON API, RSS, Atom, text/HTTP sources |
+| Safety | Permission gate, approval flow, serialized write lane, verification |
+| Packaging | Windows Portable, macOS DMG, GitHub Actions CI/CD |
 
-ORCHA
-→ Project + Planner + Supervisor + Agent Teams + Skills + Data + Tools + Verification
-```
-
-Category: **Autonomous Work Platform**  
-Operating principle: **local-first, hybrid-capable, permission-gated**.
-
-## UI Contract v7.7
-
-Orcha giữ visual language warm-dark đã hình thành từ UI Orcha-era trong `studio/styles.css`; đây là baseline bắt buộc, không phải một theme tạm thời.
-
-- palette, density, radius và workspace layout hiện hữu là nguồn ưu tiên;
-- `ui-foundation.css` phải kế thừa token canonical thay vì tạo palette song song;
-- Anthropic Claude Code `frontend-design` được dùng cho hierarchy, typography discipline, structure, copy, restraint, responsive, focus và self-critique nhưng **không được tự đổi visual identity của Orcha**;
-- icon product UI dùng **outline SVG only**: `fill=none`, `stroke=currentColor`, stroke 1.8, round cap/join;
-- không thêm emoji/Unicode làm icon hệ thống mới;
-- product-facing chat/UI chỉ dùng tên **Orcha**;
-- Inspector có close/reopen path, focus-visible và reduced-motion được giữ;
-- Data Hub dùng product modal, không browser-native `prompt()`.
-
-Contract chi tiết: `docs/ORCHA-UI-CONTRACT.md`.
-
-Skill mặc định cho tạo/sửa frontend: `orcha-frontend-design`. Skill này khóa thứ tự ưu tiên: user brief → Orcha visual baseline → existing component patterns → Claude quality rules → experimentation.
-
-### Extensions / Reference Lab
-
-Reference Lab là lớp **discovery-only** để Orcha nghiên cứu pattern từ hệ sinh thái ngoài mà không tự cài hoặc thực thi code bên thứ ba.
-
-Nguồn nghiên cứu/preset hiện tại:
-
-- AI Templates Plugins — taxonomy Skills / Agents / Commands / Hooks / MCP / LSP;
-- Sindre Sorhus Awesome — discovery map đa lĩnh vực;
-- Anthropic Claude Code Frontend Design — nguyên tắc visual direction, hierarchy, restraint, accessibility và self-critique.
-
-Reference catalog chỉ lưu tên, tag và pattern dùng để nghiên cứu. `auto_install=false` và `execute_external_code=false`; Permission Engine vẫn là authority cho write action.
-
-## Kiến trúc v7.7
+### Kiến trúc rút gọn
 
 ```text
-Goal
- ↓
+User Goal
+   ↓
 Project Workspace
- ↓
-Autonomous Planner
- ↓
-Task DAG
- ↓
-Project Supervisor
- ├─ read-only task → execute on explicit run/tick → verify → done
- └─ write task → Approval Inbox → Permission Engine → explicit execution
- ↓
-Agent Runtime
- ├─ Single
- ├─ Parallel
- └─ Agent Team
- ↓
-Skills / MCP / Computer / Design Agent
- ↓
+   ↓
+Planner → Task DAG → Supervisor
+   ↓
+Single / Parallel / Agent Team
+   ↓
+Skills + MCP + Local Tools
+   ↓
 Model Router
- ├─ Desktop local (Ollama)
- ├─ Mobile on-device selector
- ├─ Trusted desktop peer target
- └─ Private remote provider target
-
-Data Hub
- ├─ JSON API
- ├─ RSS
- ├─ Atom
- └─ Text/HTTP source
-      ↓ scheduled read-only sync
-   local evidence cache
-
-UI Contract
- ├─ Orcha-derived Orcha visual baseline
- ├─ Claude frontend quality rules (subordinate)
- ├─ outline icon registry
- └─ product-facing Orcha copy gate
+   ├─ Local Ollama models
+   ├─ Vision model
+   └─ Hybrid provider path
+   ↓
+Verification + Permission Gate
+   ↓
+Result / Checkpoint / Resume
 ```
 
-## Data Hub — tự cập nhật dữ liệu nhiều nguồn
+---
 
-Orcha có Data Hub foundation để tránh giới hạn “chỉ biết dữ liệu local”. Source registry được lưu local và có thể tự đồng bộ theo lịch.
+## Tính năng nổi bật
 
-Hỗ trợ hiện tại:
+- **Autonomous Planner** — phân rã mục tiêu thành task/milestone có dependency.
+- **Agent Team** — nhiều agent phối hợp theo mailbox durable/FIFO và có thể resume session.
+- **MCP tools** — kết nối tool ngoài qua Model Context Protocol.
+- **Local-first RAG** — index project, memory và evidence local trước khi gọi model.
+- **Virtual Context** — mở rộng kho tri thức tìm kiếm mà không giả định model có attention 1M token.
+- **Model Router** — chọn model theo RAM, loại nhiệm vụ và capability.
+- **UI/UX Vision** — phân tích screenshot/layout bằng vision profile riêng.
+- **Permission Engine** — write action phải đi qua quyền/approval; read-only và write lane được tách rõ.
+- **Data Hub** — đọc JSON/RSS/Atom/text endpoint và cache evidence local.
+- **Cross-platform desktop** — Windows Portable và macOS DMG được kiểm tra bằng CI.
 
-- JSON HTTP API;
-- RSS;
-- Atom;
-- text endpoint;
-- chu kỳ sync tối thiểu 15 phút;
-- giới hạn 5 MB mỗi lần fetch;
-- cache document local;
-- trạng thái lần sync gần nhất;
-- source enable/pause;
-- scheduler nền chỉ thực hiện **network read**;
-- reference presets cho các nguồn nghiên cứu UI/plugin;
-- SSRF/private-network/credential redirect guards từ v7.6.
+---
 
-Credential không lưu trực tiếp trong source JSON. Header bí mật được tham chiếu qua biến môi trường (`ORCHA_SOURCE_*`).
+# Cài đặt
 
-Data Hub **không tự POST/PUT/DELETE ra nguồn ngoài**. Đây là data-ingestion read lane, tách khỏi Permission Engine của write tools.
+## 1. Cài từ GitHub Releases — khuyến nghị
 
-API:
+Mở trang **Releases** của repository và tải bản mới nhất:
 
-- `GET /api/data/status`
-- `GET /api/data/sources`
-- `POST /api/data/sources`
-- `POST /api/data/sync`
-- `POST /api/data/sources/{id}/enabled`
-- `GET /api/reference/plugins`
+`https://github.com/minhduchd-mds/Orcha/releases`
 
-## Mobile Runtime
+### Windows 10/11 x64
 
-Mục tiêu của Orcha Mobile không phải ép desktop Ollama chạy trực tiếp trên iPhone/Android. Mobile Runtime selector chọn execution path phù hợp thiết bị:
+**Yêu cầu**
+
+- Windows 10/11 x64
+- Python 3.10+
+- Ollama nếu muốn chạy local model
+- RAM tối thiểu khoảng 4 GB cho profile mặc định
+
+**Cài đặt**
+
+1. Tải `Orcha-vX.Y.Z-Windows-Portable.zip`.
+2. Giải nén vào thư mục mong muốn.
+3. Chạy `INSTALL.bat` lần đầu để kiểm tra/cài dependency cần thiết.
+4. Double-click `Orcha.vbs`.
+5. Orcha mở tại `http://127.0.0.1:11435`.
+6. Vào **Model local** → chọn model → **Cài / sửa model**.
+
+Những lần sau chỉ cần chạy `Orcha.vbs`.
+
+### macOS 12+
+
+**Yêu cầu**
+
+- macOS 12 trở lên
+- Python 3.10+
+- Ollama nếu muốn chạy local model
+
+**Cài đặt**
+
+1. Tải `Orcha-vX.Y.Z-macOS.dmg`.
+2. Mở DMG và kéo **Orcha.app** vào **Applications**.
+3. Nếu Gatekeeper cảnh báo vì community build chưa ký/notarize, dùng **Control-click → Open** ở lần mở đầu tiên.
+4. Orcha chạy tại `http://127.0.0.1:11435`.
+5. Vào **Model local** để cài profile phù hợp cấu hình máy.
+
+> DMG/Portable không nhúng model weights. Model được tải riêng qua Ollama khi người dùng chọn cài.
+
+---
+
+## 2. Chạy từ source
+
+```bash
+git clone https://github.com/minhduchd-mds/Orcha.git
+cd Orcha
+python app/studio_server_v77.py --host 127.0.0.1 --port 11435 --profile balanced
+```
+
+Sau đó mở:
 
 ```text
-Task trên mobile
- ↓
-Device capability
- RAM · storage · pin · thermal · network · privacy
- ↓
-Mobile Model Selector
- ├─ on-device model
- ├─ trusted desktop peer
- ├─ private remote provider
- └─ defer nếu privacy strict mà không thể local
+http://127.0.0.1:11435
 ```
 
-Foundation hiện tại cân nhắc RAM, storage, battery, thermal state, task type, model đã cài và privacy mode.
+Nếu sử dụng local model, cài Ollama trước rồi dùng **Model local** trong Orcha để tải/tạo profile.
 
-Runtime mobile dự kiến dùng các backend phù hợp như **llama.cpp / MLC / ExecuTorch**, và có thể có Core ML adapter trên Apple platforms. Ollama tag desktop không được coi là package chạy trực tiếp trên mobile; model phải được quantize/build đúng runtime.
+---
 
-API:
+# Model local & chấm điểm
 
-- `GET /api/mobile/models`
-- `POST /api/mobile/recommend`
+Orcha hiện có các profile built-in sau:
 
-> Mobile Runtime hiện vẫn là selector/API foundation; chưa tuyên bố đã ship native iOS/Android app, trusted-peer transport hay mobile inference package hoàn chỉnh.
+| Model | Backbone | Dung lượng gần đúng | RAM tối thiểu | Chat | Tiếng Việt | Code | Reasoning | Tools | Vision/UIUX | Orcha Score |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Orcha MAX** | `gemma3:270m-it-qat` | ~241 MB | 3 GB | 55 | 48 | 40 | 38 | 35 | — | **4.3/10** |
+| **Orcha Balanced** | `qwen3:0.6b-q4_K_M` | ~522 MB | 4 GB | 72 | 74 | 66 | 64 | 64 | — | **6.8/10** |
+| **Orcha Logic 0.8B** | `qwen3.5:0.8b` | ~1.0 GB | 4 GB | 78 | 80 | 72 | 76 | 74 | — | **7.6/10** |
+| **Orcha Quality** | `qwen3:1.7b` | ~1.4 GB | 6 GB | 82 | 82 | 78 | 78 | 74 | — | **7.9/10** |
+| **UI/UX Vision Lite** | `moondream:1.8b-v2-q2_K` | ~1.5 GB | 4 GB | 58 | 45 | 28 | 44 | 40 | Vision 82 / UIUX 86 | **8.4/10*** |
 
-## Project + Supervisor
+### Cách tính điểm
 
-Project lưu goal, task queue, dependency, approval, checkpoint và resume. Planner tự tạo milestone/task, gắn Skill/Model/Agent strategy và budget. Supervisor chỉ có read-only auto lane khi người dùng gọi `tick/run`; không phải daemon tự chạy liên tục.
+- Với model text: **Orcha Score = trung bình Chat + Vietnamese + Code + Reasoning + Tools**.
+- Với **UI/UX Vision Lite**: điểm `8.4/10` là **điểm chuyên môn UI/UX**, tính từ Vision + UIUX capability; không dùng để so trực tiếp với model text tổng quát.
+- Đây là **capability metadata phục vụ routing trong Orcha**, không phải benchmark học thuật hay tuyên bố IQ của model.
 
-Safety invariant:
+### Nên chọn model nào?
 
-- Supervisor không tự chạy write side-effect;
-- Project Approval không bypass Permission Engine;
-- retry tự động chỉ dành cho read-only task;
-- task chỉ `done` sau verification gate;
-- restart không tự replay side effect.
+| Nhu cầu | Khuyến nghị |
+|---|---|
+| Máy rất yếu / phản hồi cực nhanh | **Orcha MAX** |
+| Chat, RAG, tool cơ bản, RAM thấp | **Orcha Balanced** |
+| Logic/agent/tool tốt hơn nhưng vẫn nhẹ | **Orcha Logic 0.8B** |
+| Code, planning, reasoning sâu hơn | **Orcha Quality** |
+| Screenshot, layout, UI/UX review | **UI/UX Vision Lite** |
 
-## Parallel / Agent Team
+### Orcha Logic 0.8B
 
-Máy khoảng 4 GB RAM mặc định tối đa 2 worker song song. Read/reasoning/retrieval có thể chạy đồng thời; write lane vẫn serialize.
+`Orcha Logic 0.8B` dùng Qwen3.5-0.8B làm backbone và một behavior recipe do Orcha tự xây dựng cho:
 
 ```text
-Coordinator
- ├─ Research
- ├─ Specialist
- ├─ Critic
- └─ Verifier
-      ↓
-   Synthesis
-      ↓
- serial write lane
+Intent
+  ↓
+Direct / Reason / Tool
+  ↓
+Minimum sufficient execution
+  ↓
+Self-check / Verify
+  ↓
+Concise final result
 ```
 
-## Safe learning
+Profile này tập trung vào adaptive reasoning, tool discipline, self-check và permission awareness. Nó **không chứa proprietary weights hoặc private chain-of-thought của nhà cung cấp khác**.
 
-Orcha lưu outcome/lesson local để chấm điểm chiến lược `single / parallel / team`. Learning chỉ điều chỉnh recommendation/score; không tự sửa executable code, không tự tăng permission và không tự bật red tools.
+---
 
-## Context
+## Context model
 
-- **Virtual Context**: kho searchable/RAG local, có thể rất lớn.
-- **Working Set**: evidence thực sự đưa vào model mỗi lượt.
-- **Native Context**: context gốc của model.
+Orcha phân biệt ba lớp context:
 
-Virtual Context 1M không có nghĩa model attention trực tiếp 1M token.
+- **Virtual Context** — kho searchable/RAG lớn trên local storage.
+- **Working Set** — evidence thực sự được đưa vào model ở lượt hiện tại.
+- **Native Context** — context window gốc của model.
 
-## Desktop local models
+Vì vậy `Virtual Context 1M` không có nghĩa model đang attention trực tiếp trên 1 triệu token.
 
-| Profile | Model hiện tại | Gần đúng | Mục đích |
-|---|---|---:|---|
-| MAX | `gemma3:270m-it-qat` | ~241 MB | máy rất yếu |
-| Balanced | `qwen3:0.6b-q4_K_M` | ~522 MB | mặc định RAM thấp |
-| Quality | `qwen3:1.7b` | ~1.4 GB | reasoning/code cao hơn |
-| UI/UX Vision Lite | `moondream:1.8b-v2-q2_K` | ~1.5 GB | screenshot observer |
+---
 
-Capability metadata là routing metadata; benchmark runtime được tách riêng. KII là operational heuristic, không phải IQ.
+## Safety model
+
+Orcha sử dụng nguyên tắc **local-first + permission-gated**:
+
+```text
+Read / Search / Reason
+        ↓
+     Execute
+        ↓
+Write / Side effect
+        ↓
+Permission / Approval
+        ↓
+Verification
+        ↓
+Checkpoint
+```
+
+- Supervisor không tự bypass Permission Engine.
+- Write task không tự replay sau restart.
+- Retry tự động ưu tiên read-only operation.
+- Agent chỉ được coi là hoàn thành sau verification gate phù hợp.
+- Data Hub scheduler chỉ dùng cho network read/data ingestion.
+
+---
+
+## Project structure
+
+```text
+Orcha/
+├── app/            # Runtime, agents, router, supervisor, storage
+├── studio/         # Desktop web UI
+├── config/         # Model/profile configuration
+├── mcp_servers/    # MCP integrations
+├── skills/         # Orcha skills
+├── knowledge/      # Local knowledge assets
+├── scripts/        # Verification / desktop tooling
+├── tests/          # Regression tests
+├── docs/           # Architecture and release documentation
+└── Modelfile.*     # Local model behavior profiles
+```
+
+---
 
 ## Environment
 
 ```text
 ORCHA_DATA_DIR
+ORCHA_PORT
 ```
 
-Để tương thích dữ liệu cũ, runtime vẫn đọc fallback `ORCHA_DATA_DIR` trong giai đoạn migration.
+Mặc định desktop:
 
-Desktop mặc định:
+- Orcha Studio: `127.0.0.1:11435`
+- Ollama: `127.0.0.1:11434`
 
-- Orcha: `http://127.0.0.1:11435`
-- Ollama: `http://127.0.0.1:11434`
+---
 
-## Release naming
+## Build & verification
 
-- `Orcha-vX.Y.Z-Windows-Portable.zip`
-- `Orcha-vX.Y.Z-macOS.dmg`
+GitHub Actions kiểm tra Windows và macOS trước khi đóng gói.
 
-Legacy launchers/data path được giữ compatibility trong giai đoạn chuyển brand; product-facing UI/docs/package mới dùng **Orcha**.
+Kiểm tra nhanh local:
 
-## Product roadmap
+```bash
+python scripts/check_brand.py
+python scripts/verify.py --fast
+```
 
-1. Data Hub adapters: Web/RSS/API → GitHub/Drive/Notion/Slack/Calendar connectors.
-2. Dedup + incremental sync + provenance + freshness score.
-3. Hybrid retrieval: local evidence first, fresh remote evidence when needed.
-4. Native mobile companion: project/task/approval + on-device chat.
-5. Mobile model package manager + download/evict model theo storage.
-6. Trusted desktop peer: mobile gửi task nặng về máy cá nhân trong LAN/VPN.
-7. Private remote provider fallback có policy theo project.
-8. Cross-device encrypted project sync.
-9. Reference Lab → evaluated/adoptable patterns với license/risk metadata trước mọi tích hợp.
-10. UI screenshot regression + accessibility DOM audit trong release gate.
+Kiểm tra runtime đầy đủ:
+
+```bash
+python scripts/verify.py
+```
+
+---
+
+## Trạng thái dự án
+
+Orcha đang phát triển theo hướng **Autonomous Work Platform** thay vì chỉ là chatbot/local model launcher. Các lớp Agent Runtime, Project/Supervisor, MCP, Model Router, Data Hub, persistence và desktop packaging đang được phát triển song song.
+
+Các capability score có thể thay đổi khi benchmark/runtime được cải thiện.
+
+---
 
 ## License
 
-Source code của Orcha trong repository tuân theo license của repository. Model weights không được redistribute. Người dùng phải tuân thủ license của từng model/provider/source dữ liệu được cấu hình.
+Source code tuân theo license của repository. Model weights không được redistribute bởi Orcha; người dùng cần tuân thủ license của từng model/provider được sử dụng.
 
-Các nguồn tham khảo UI/plugin được dùng để học pattern hoặc discovery. Orcha không tuyên bố liên kết với các dự án đó và không tự động vendor/install code bên thứ ba.
+Orcha không tuyên bố liên kết chính thức với Qwen, Google/Gemma, Moondream, Ollama hoặc các nhà cung cấp/model khác được hỗ trợ.
