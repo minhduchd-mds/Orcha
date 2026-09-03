@@ -6,7 +6,7 @@ Orcha là nền tảng AI agent **local-first nhưng không local-only**. Sản 
 
 > **Ollama runs models. Orcha runs work.**
 
-Orcha không phải một model mới và không phải bản nén của Kimi K3. Ollama, Hugging Face, cloud model APIs hoặc runtime mobile đều có thể nằm ở lớp model/provider phía dưới Orcha.
+Orcha không phải một model mới và không phải bản nén của Orcha K3. Ollama, Hugging Face, cloud model APIs hoặc runtime mobile đều có thể nằm ở lớp model/provider phía dưới Orcha.
 
 ## Định vị
 
@@ -25,7 +25,7 @@ Operating principle: **local-first, hybrid-capable, permission-gated**.
 
 ## UI Contract v7.7
 
-Orcha giữ visual language warm-dark đã hình thành từ UI Kimi-era trong `studio/styles.css`; đây là baseline bắt buộc, không phải một theme tạm thời.
+Orcha giữ visual language warm-dark đã hình thành từ UI Orcha-era trong `studio/styles.css`; đây là baseline bắt buộc, không phải một theme tạm thời.
 
 - palette, density, radius và workspace layout hiện hữu là nguồn ưu tiên;
 - `ui-foundation.css` phải kế thừa token canonical thay vì tạo palette song song;
@@ -89,7 +89,7 @@ Data Hub
    local evidence cache
 
 UI Contract
- ├─ Kimi-derived Orcha visual baseline
+ ├─ Orcha-derived Orcha visual baseline
  ├─ Claude frontend quality rules (subordinate)
  ├─ outline icon registry
  └─ product-facing Orcha copy gate
@@ -212,7 +212,7 @@ Capability metadata là routing metadata; benchmark runtime được tách riên
 ORCHA_DATA_DIR
 ```
 
-Để tương thích dữ liệu cũ, runtime vẫn đọc fallback `KIMIK3_DATA_DIR` trong giai đoạn migration.
+Để tương thích dữ liệu cũ, runtime vẫn đọc fallback `ORCHA_DATA_DIR` trong giai đoạn migration.
 
 Desktop mặc định:
 

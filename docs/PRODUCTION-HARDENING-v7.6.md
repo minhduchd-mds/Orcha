@@ -21,7 +21,7 @@ v7.6 chọn lọc các thay đổi đã được kiểm chứng từ workspace h
 
 ## State, project & recovery
 
-- Một DATA root thống nhất qua `ORCHA_DATA_DIR` với migration fallback `KIMIK3_DATA_DIR`.
+- Một DATA root thống nhất qua `ORCHA_DATA_DIR` với migration fallback `ORCHA_DATA_DIR`.
 - Atomic JSON replace + serialized transactions cho read/modify/write quan trọng.
 - Runtime lease ngăn hai Orcha process cùng giữ một DATA.
 - Project task state do executor quản lý; dependency/DAG được kiểm tra; task đang chạy khi crash trở thành blocked/interrupted thay vì replay side effect.

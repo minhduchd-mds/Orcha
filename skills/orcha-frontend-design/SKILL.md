@@ -20,13 +20,13 @@ permissions:
 # Orcha Frontend Design
 
 ## Mục tiêu
-Tạo và sửa giao diện Orcha mà không làm mất visual identity đã hình thành từ UI Kimi trước đây. Repo không có một tài liệu "Kimi Style Rule" chính thức riêng; vì vậy baseline bắt buộc được rút trực tiếp từ style đang tồn tại trong `studio/styles.css` và được chuẩn hóa thành Orcha UI Contract.
+Tạo và sửa giao diện Orcha mà không làm mất visual identity đã hình thành từ UI Orcha trước đây. Repo không có một tài liệu "Orcha Style Rule" chính thức riêng; vì vậy baseline bắt buộc được rút trực tiếp từ style đang tồn tại trong `studio/styles.css` và được chuẩn hóa thành Orcha UI Contract.
 
 Nguồn tham khảo chất lượng thứ hai là Anthropic Claude Code `frontend-design`. Các nguyên tắc Claude được dùng cho hierarchy, typography, structure, restraint, copy, responsive, accessibility và self-critique; **không được tự đổi palette, radius, density, layout language hoặc icon language của Orcha**.
 
 ## Thứ tự ưu tiên bắt buộc
 1. Yêu cầu/brief cụ thể của người dùng.
-2. **Orcha Visual Baseline (Kimi-derived)** trong `studio/styles.css` và `docs/ORCHA-UI-CONTRACT.md`.
+2. **Orcha Visual Baseline (Orcha-derived)** trong `studio/styles.css` và `docs/ORCHA-UI-CONTRACT.md`.
 3. Component/pattern hiện hữu của màn hình đang sửa.
 4. Claude frontend-design quality rules.
 5. Ý tưởng thẩm mỹ mới chỉ được dùng nếu không xung đột 1–4.
@@ -52,7 +52,7 @@ Nếu Claude rule hoặc một reference ngoài làm giao diện lệch visual b
 
 ## Brand/Copy Rule — bắt buộc
 - Product-facing text chỉ dùng tên **Orcha**.
-- Không được hiển thị `Kimi`, `KimiK3`, `KimiK3-Lite` trong chat, welcome, permission, dialog, toast, error, title hoặc assistant metadata.
+- Không được hiển thị `Orcha`, `Orcha`, `Orcha` trong chat, welcome, permission, dialog, toast, error, title hoặc assistant metadata.
 - Tên lịch sử chỉ được tồn tại trong compatibility code, migration variable/model id, changelog/license/release history có ngữ cảnh rõ ràng.
 - Copy viết từ phía người dùng, active voice, sentence case; cùng một action phải giữ cùng một tên xuyên suốt flow.
 
@@ -72,7 +72,7 @@ Nếu Claude rule hoặc một reference ngoài làm giao diện lệch visual b
 - Visual token mới không tạo palette song song với baseline.
 - Không có emoji/Unicode làm icon UI mới; icon product là outline SVG.
 - Mọi icon-only control có accessible name.
-- Product-facing chat/UI không còn Kimi/KimiK3/KimiK3-Lite.
+- Product-facing chat/UI không còn Orcha/Orcha/Orcha.
 - Không còn browser-native prompt trong flow đã sửa.
 - Panel phụ có close/reopen path.
 - Keyboard focus nhìn thấy được.

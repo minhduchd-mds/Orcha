@@ -20,7 +20,7 @@ class H77(v70.H70):
                 'version':'7.7.0',
                 'ui_foundation':True,
                 'ui_contract':True,
-                'visual_baseline':'kimi-derived-orcha',
+                'visual_baseline':'orcha-derived-orcha',
                 'claude_frontend_quality_rules':True,
                 'claude_can_override_visual_baseline':False,
                 'outline_icons':True,

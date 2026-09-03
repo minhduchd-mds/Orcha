@@ -51,8 +51,8 @@ function patchInspector(){
 function setInspector(open,persist=true){document.body.classList.toggle('inspector-collapsed',!open);$('inspector')?.classList.toggle('closed',!open);$('openInspector')?.classList.toggle('active',open);if(persist)localStorage.setItem('orcha.inspector',open?'open':'closed')}
 function replaceBrandText(root=document){
  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
- nodes.forEach(n=>{const p=n.parentElement;if(!p||/^(SCRIPT|STYLE|TEXTAREA|CODE|PRE)$/.test(p.tagName))return;if(/KimiK3|Kimi/i.test(n.nodeValue||''))n.nodeValue=(n.nodeValue||'').replace(/KimiK3(?:-Lite)?|KimiK3 Lite|Kimi/gi,'Orcha')});
- root.querySelectorAll?.('[title],[aria-label],[placeholder]').forEach(el=>['title','aria-label','placeholder'].forEach(a=>{const v=el.getAttribute(a);if(v&&/Kimi/i.test(v))el.setAttribute(a,v.replace(/KimiK3(?:-Lite)?|KimiK3 Lite|Kimi/gi,'Orcha'))}));
+ nodes.forEach(n=>{const p=n.parentElement;if(!p||/^(SCRIPT|STYLE|TEXTAREA|CODE|PRE)$/.test(p.tagName))return;if(/Orcha|Orcha/i.test(n.nodeValue||''))n.nodeValue=(n.nodeValue||'').replace(/Orcha(?:-Lite)?|Orcha|Orcha/gi,'Orcha')});
+ root.querySelectorAll?.('[title],[aria-label],[placeholder]').forEach(el=>['title','aria-label','placeholder'].forEach(a=>{const v=el.getAttribute(a);if(v&&/Orcha/i.test(v))el.setAttribute(a,v.replace(/Orcha(?:-Lite)?|Orcha|Orcha/gi,'Orcha'))}));
 }
 function patchBrand(){document.title='Orcha · Autonomous Work Platform';replaceBrandText(document)}
 function patchAccessibility(){

@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 import agent_runtime as agents
 import harness_runtime as harness
 import hermes_runtime as hermes
-import kimik3_lite as core
+import orcha_core as core
 import model_registry as registry
 import studio_server_v68 as v68
 
@@ -240,7 +240,7 @@ def main():
     srv.profile = a.profile
     srv.model = a.model or cfg['ollama_name']
     srv.model_mode = 'auto'
-    print(f'KimiK3-Lite v6.9 Studio http://{a.host}:{a.port}')
+    print(f'Orcha v6.9 Studio http://{a.host}:{a.port}')
     srv.serve_forever()
 
 

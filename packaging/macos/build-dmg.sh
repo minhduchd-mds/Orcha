@@ -8,7 +8,7 @@ MACOS="$APP/Contents/MacOS"
 DMGROOT="$OUT/dmg-root"
 rm -rf "$OUT"
 mkdir -p "$RES" "$MACOS" "$DMGROOT"
-for item in app mcp_servers studio config skills knowledge docs scripts tests Modelfile.v3 Modelfile.v3.max Modelfile.v3.quality README.md LICENSE LICENSE-NOTE.md CHANGELOG.md .kimik3ignore; do
+for item in app mcp_servers studio config skills knowledge docs scripts tests Modelfile.v3 Modelfile.v3.max Modelfile.v3.quality README.md LICENSE LICENSE-NOTE.md CHANGELOG.md .orchaignore; do
   [ -e "$ROOT/$item" ] && cp -R "$ROOT/$item" "$RES/"
 done
 cat > "$MACOS/Orcha" <<'LAUNCH'
@@ -16,10 +16,10 @@ cat > "$MACOS/Orcha" <<'LAUNCH'
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../Resources/orcha" && pwd)"
-PORT="${ORCHA_PORT:-${KIMIK3_PORT:-11435}}"
+PORT="${ORCHA_PORT:-11435}"
 URL="http://127.0.0.1:${PORT}/"
-export ORCHA_DATA_DIR="${ORCHA_DATA_DIR:-${KIMIK3_DATA_DIR:-$HOME/Library/Application Support/Orcha}}"
-export KIMIK3_DATA_DIR="${KIMIK3_DATA_DIR:-$ORCHA_DATA_DIR}"
+export ORCHA_DATA_DIR="${ORCHA_DATA_DIR:-$HOME/Library/Application Support/Orcha}"
+export ORCHA_DATA_DIR="${ORCHA_DATA_DIR:-$ORCHA_DATA_DIR}"
 mkdir -p "$ORCHA_DATA_DIR" "$HOME/Library/Logs"
 if ! command -v python3 >/dev/null 2>&1; then osascript -e 'display alert "Orcha" message "Chưa có Python 3. Hãy cài Python 3.10+ trước." as critical' || true; open "https://www.python.org/downloads/macos/" || true; exit 1; fi
 if ! curl -fsS "http://127.0.0.1:11434/api/tags" >/dev/null 2>&1 && [ -d "/Applications/Ollama.app" ]; then open -gja "Ollama" || true; sleep 1; fi

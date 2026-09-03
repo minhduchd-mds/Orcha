@@ -6,7 +6,7 @@ from http.server import ThreadingHTTPServer
 import studio_server as legacy
 import model_registry as registry
 import model_benchmark as modelbench
-import kimik3_lite as core
+import orcha_core as core
 import agent_runtime as agents
 
 MODEL_JOBS={}
@@ -108,5 +108,5 @@ class H64(legacy.H):
         return super().do_POST()
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=legacy.profiles().get(a.profile) or legacy.profiles()['balanced'];legacy.workflows.ensure();legacy.start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H64);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];srv.model_mode='auto';print(f'KimiK3-Lite v6.4 Studio http://{a.host}:{a.port}');srv.serve_forever()
+    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=legacy.profiles().get(a.profile) or legacy.profiles()['balanced'];legacy.workflows.ensure();legacy.start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H64);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];srv.model_mode='auto';print(f'Orcha v6.4 Studio http://{a.host}:{a.port}');srv.serve_forever()
 if __name__=='__main__':main()

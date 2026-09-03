@@ -18,14 +18,12 @@ def _verify_ui_contract():
     css=(ROOT/'studio/ui-foundation.css').read_text(encoding='utf-8')
     skill=(ROOT/'skills/orcha-frontend-design/SKILL.md').read_text(encoding='utf-8')
     contract=(ROOT/'docs/ORCHA-UI-CONTRACT.md').read_text(encoding='utf-8')
-    if re.search(r'KimiK3(?:-Lite)?|KimiK3 Lite|\bKimi\b',index,re.I):
-        raise AssertionError('Retired Kimi product name remains in product-facing studio/index.html')
     required=('Anh muốn Orcha làm gì?','Orcha cần quyền thực hiện','Orcha · Autonomous Work Platform')
     if not all(x in index for x in required):raise AssertionError('Orcha product copy contract is incomplete')
     if "iconRule:'outline-only'" not in ui or 'fill="none"' not in ui or 'stroke="currentColor"' not in ui:
         raise AssertionError('Outline icon registry contract missing')
     if '--ui-bg:var(--bg)' not in css or '--ui-accent:var(--accent)' not in css:
-        raise AssertionError('UI Foundation must inherit canonical Kimi-derived/Orcha tokens')
+        raise AssertionError('UI Foundation must inherit canonical Orcha tokens')
     if 'Orcha Visual Baseline' not in skill or 'Claude frontend-design' not in skill or 'Outline only' not in skill:
         raise AssertionError('Mandatory frontend skill hierarchy/rules missing')
     if 'If a Claude-inspired idea would make Orcha look like a different product, reject that idea.' not in contract:
@@ -33,6 +31,7 @@ def _verify_ui_contract():
     print('PASS: Orcha UI contract + outline icon + product copy',flush=True)
 
 def main():
+    subprocess.run([sys.executable,str(ROOT/'scripts/check_brand.py')],check=True,cwd=ROOT)
     parser=argparse.ArgumentParser();parser.add_argument('--fast',action='store_true');args=parser.parse_args()
     files=[*ROOT.glob('app/*.py'),*ROOT.glob('mcp_servers/*.py'),*ROOT.glob('scripts/*.py'),*ROOT.glob('tests/*.py')]
     for path in files:ast.parse(path.read_text(encoding='utf-8-sig'),filename=str(path))
@@ -45,7 +44,7 @@ def main():
     _verify_ui_contract()
     if args.fast:return
     with tempfile.TemporaryDirectory(prefix='orcha-verify-') as directory:
-        os.environ['ORCHA_DATA_DIR']=directory;os.environ['KIMIK3_DATA_DIR']=directory
+        os.environ['ORCHA_DATA_DIR']=directory
         sys.path.insert(0,str(ROOT/'app'))
         count=0
         for path in sorted(ROOT.glob('app/*.py')):

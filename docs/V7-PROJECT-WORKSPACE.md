@@ -31,7 +31,7 @@ Project Workspace là lớp dự án bền vững của **Orcha Autonomous Work 
 3. Project/task ID được sanitize chống path traversal.
 4. File JSON dùng atomic replace để giảm nguy cơ hỏng dữ liệu khi app dừng đột ngột.
 5. Project data ưu tiên nằm trong `ORCHA_DATA_DIR/projects-v7`.
-6. `KIMIK3_DATA_DIR` chỉ còn là alias migration để người dùng bản cũ không mất dữ liệu.
+6. `ORCHA_DATA_DIR` chỉ còn là alias migration để người dùng bản cũ không mất dữ liệu.
 
 ## UI
 Menu `Dự án` mở workspace riêng gồm Project list, Planner, Task queue, Supervisor, progress, Approval Inbox, Checkpoint và Resume.

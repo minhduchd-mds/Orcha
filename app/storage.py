@@ -10,7 +10,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path(os.environ.get('ORCHA_DATA_DIR') or os.environ.get('KIMIK3_DATA_DIR') or ROOT / 'data').expanduser().resolve()
+DATA = Path(os.environ.get('ORCHA_DATA_DIR') or ROOT / 'data').expanduser().resolve()
 _lock = threading.RLock()
 _local = threading.local()
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json,os,time,uuid,storage
 from contextvars import copy_context
 from concurrent.futures import ThreadPoolExecutor,as_completed
-import kimik3_lite as core
+import orcha_core as core
 import model_registry as registry
 RUNS={};DEFAULT_MAX_WORKERS=2;ABSOLUTE_MAX_WORKERS=4
 ROLES={'research':('Research Agent','Tìm evidence liên quan trong project/knowledge. Không sửa dữ liệu.'),'critic':('Critic Agent','Phản biện yêu cầu, tìm rủi ro, edge cases và điểm chưa chắc chắn.'),'specialist':('Specialist Agent','Phân tích chuyên môn sâu theo đúng domain của yêu cầu.'),'verifier':('Verifier Agent','Kiểm tra tính nhất quán, bằng chứng và các tuyên bố của các agent khác.')}

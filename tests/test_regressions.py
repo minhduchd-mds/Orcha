@@ -20,14 +20,14 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 _TEMP = tempfile.TemporaryDirectory(prefix='orcha-regression-')
 os.environ['ORCHA_DATA_DIR'] = _TEMP.name
-os.environ['KIMIK3_DATA_DIR'] = _TEMP.name
+os.environ['ORCHA_DATA_DIR'] = _TEMP.name
 sys.path.insert(0, str(ROOT / 'app'))
 import storage
 import permission_engine as permissions
 import mcp_gateway as mcp
 import mcp_transport
 import agent_runtime as agents
-import kimik3_lite as core
+import orcha_core as core
 import context_engine as context
 import project_workspace as projects
 import project_planner as planner

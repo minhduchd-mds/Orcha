@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # Verification recipes are host-owned argv arrays. The model can request a
 # verification profile but cannot inject shell text or arbitrary commands.
 PY_COMPILE = [
-    'app/kimik3_lite.py', 'app/context_engine.py', 'app/workflow_engine.py',
+    'app/orcha_core.py', 'app/context_engine.py', 'app/workflow_engine.py',
     'app/studio_server.py', 'app/studio_server_v64.py', 'app/studio_server_v65.py',
     'app/studio_server_v66.py', 'app/studio_server_v67.py', 'app/studio_server_v68.py',
     'app/studio_server_v69.py', 'app/studio_server_v70.py', 'app/harness_runtime.py',
@@ -79,7 +79,7 @@ def recipes(root: str | Path = ROOT) -> list[dict]:
 def verify(root: str | Path = ROOT, profile: str = 'fast', timeout_per_check: int = 45) -> dict:
     root = Path(root).resolve()
     if root != ROOT.resolve():
-        raise ValueError('Verifier v1 chỉ chạy trên source bundle KimiK3-Lite đã tin cậy')
+        raise ValueError('Verifier v1 chỉ chạy trên source bundle Orcha đã tin cậy')
     available = recipes(root)
     if profile == 'fast':
         selected = [x for x in available if x['id'] in {'python-compile', 'self-harness_runtime', 'self-model_registry', 'self-hermes_runtime'} or x['id'].startswith('node-app') or x['id'].startswith('node-harness')]

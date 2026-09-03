@@ -8,7 +8,7 @@ from urllib.parse import parse_qs,urlsplit
 import action_log as actions
 import agent_runtime as agents
 import benchmark_engine as benchmark
-import kimik3_lite as core
+import orcha_core as core
 import mcp_gateway as mcp
 import permission_engine as permissions
 import skill_builder
@@ -19,7 +19,7 @@ ROOT=Path(__file__).resolve().parents[1];STUDIO=ROOT/'studio';CONFIG=ROOT/'confi
 
 def profiles():
     try:return json.loads(CONFIG.read_text(encoding='utf-8'))
-    except Exception:return {'balanced':{'base':'qwen3:0.6b-q4_K_M','ollama_name':'kimik3-lite-v3','published_model_size':'~522 MB','working_context':4096,'native_context':40960,'virtual_context':1000000}}
+    except Exception:return {'balanced':{'base':'qwen3:0.6b-q4_K_M','ollama_name':'orcha-v3','published_model_size':'~522 MB','working_context':4096,'native_context':40960,'virtual_context':1000000}}
 def ollama_models(host='http://127.0.0.1:11434'):
     try:
         with urllib.request.urlopen(host.rstrip('/')+'/api/tags',timeout=3) as r:d=json.load(r)
@@ -65,11 +65,11 @@ def setup_job(profile,host):
 def choose_folder():
     if sys.platform=='darwin':
         try:
-            cp=subprocess.run(['osascript','-e','POSIX path of (choose folder with prompt "Chọn thư mục để KimiK3-Lite đọc")'],capture_output=True,text=True,timeout=120);return cp.stdout.strip() if cp.returncode==0 else ''
+            cp=subprocess.run(['osascript','-e','POSIX path of (choose folder with prompt "Chọn thư mục để Orcha đọc")'],capture_output=True,text=True,timeout=120);return cp.stdout.strip() if cp.returncode==0 else ''
         except Exception:return ''
     try:
         import tkinter as tk;from tkinter import filedialog
-        r=tk.Tk();r.withdraw();v=filedialog.askdirectory(title='Chọn thư mục để KimiK3-Lite đọc');r.destroy();return v or ''
+        r=tk.Tk();r.withdraw();v=filedialog.askdirectory(title='Chọn thư mục để Orcha đọc');r.destroy();return v or ''
     except Exception:return ''
 def _skill_list():return skill_builder.list_all()
 
@@ -182,5 +182,5 @@ class H(BaseHTTPRequestHandler):
     def log_message(self,*a):pass
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=profiles().get(a.profile) or profiles()['balanced'];workflows.ensure();start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];print(f'KimiK3-Lite Studio http://{a.host}:{a.port}');srv.serve_forever()
+    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=profiles().get(a.profile) or profiles()['balanced'];workflows.ensure();start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];print(f'Orcha Studio http://{a.host}:{a.port}');srv.serve_forever()
 if __name__=='__main__':main()

@@ -3,7 +3,7 @@
   "models": [
     {
       "id": "max",
-      "name": "KimiK3 MAX",
+      "name": "Orcha MAX",
       "ollama_tag": "gemma3:270m-it-qat",
       "size_mb": 241,
       "min_ram_gb": 3,
@@ -15,7 +15,7 @@
     },
     {
       "id": "balanced",
-      "name": "KimiK3 Balanced",
+      "name": "Orcha Balanced",
       "ollama_tag": "qwen3:0.6b-q4_K_M",
       "size_mb": 522,
       "min_ram_gb": 4,
@@ -27,7 +27,7 @@
     },
     {
       "id": "quality",
-      "name": "KimiK3 Quality",
+      "name": "Orcha Quality",
       "ollama_tag": "qwen3:1.7b",
       "size_mb": 1400,
       "min_ram_gb": 6,

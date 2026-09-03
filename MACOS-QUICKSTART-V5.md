@@ -18,6 +18,6 @@ Mobile Runtime foundation chọn execution path dựa trên RAM, storage, batter
 
 ## Dữ liệu
 
-Mặc định mới: `~/Library/Application Support/Orcha` qua `ORCHA_DATA_DIR`. Runtime vẫn hỗ trợ `KIMIK3_DATA_DIR` như alias migration.
+Mặc định mới: `~/Library/Application Support/Orcha` qua `ORCHA_DATA_DIR`. Runtime vẫn hỗ trợ `ORCHA_DATA_DIR` như alias migration.
 
 DMG không chứa model weights; local model được tải riêng theo runtime/provider tương ứng.

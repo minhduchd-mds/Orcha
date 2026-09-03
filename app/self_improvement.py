@@ -4,7 +4,7 @@ import json, os, time, uuid
 from collections import defaultdict
 from pathlib import Path
 
-DATA=Path(os.environ.get('KIMIK3_DATA_DIR',str(Path(__file__).resolve().parents[1]/'data'))).expanduser()
+DATA=Path(os.environ.get('ORCHA_DATA_DIR',str(Path(__file__).resolve().parents[1]/'data'))).expanduser()
 DIR=DATA/'learning';EVENTS=DIR/'outcomes.jsonl';STATE=DIR/'strategy_scores.json';LESSONS=DIR/'lessons.jsonl'
 STRATEGIES=('single','parallel','team')
 

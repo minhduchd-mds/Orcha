@@ -23,7 +23,7 @@ Orcha → kiểm tra runtime → kiểm tra model/provider → chọn profile �
 
 ## Data
 
-Biến mới là `ORCHA_DATA_DIR`. `KIMIK3_DATA_DIR` chỉ được giữ như alias migration. macOS mặc định dùng `~/Library/Application Support/Orcha`.
+Biến mới là `ORCHA_DATA_DIR`. `ORCHA_DATA_DIR` chỉ được giữ như alias migration. macOS mặc định dùng `~/Library/Application Support/Orcha`.
 
 ## v7.4 extension
 

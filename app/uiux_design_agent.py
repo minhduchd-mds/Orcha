@@ -87,7 +87,7 @@ def remediation_workflow(report):
     return {'id':'uiux-remediation-'+uuid.uuid4().hex[:8],'name':'UI/UX Remediation','category':'design','steps':steps}
 
 def figma_handoff(report):
-    return {'version':'1.0','kind':'kimik3.uiux.handoff','target':'figma-mcp','read_only_default':True,'requires_confirmation_for_write':True,'payload':{'screens':report.get('screens',[]),'components':report.get('components',[]),'tokens':report.get('tokens',{}),'issues':report.get('issues',[]),'workflow':report.get('remediation_workflow',{})}}
+    return {'version':'1.0','kind':'orcha.uiux.handoff','target':'figma-mcp','read_only_default':True,'requires_confirmation_for_write':True,'payload':{'screens':report.get('screens',[]),'components':report.get('components',[]),'tokens':report.get('tokens',{}),'issues':report.get('issues',[]),'workflow':report.get('remediation_workflow',{})}}
 
 def score(report):
     issues=report.get('issues',[]);pen=sum(18 if str(x.get('severity')).upper()=='P0' else 7 if str(x.get('severity')).upper()=='P1' else 2 for x in issues)

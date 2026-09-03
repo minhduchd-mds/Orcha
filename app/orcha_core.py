@@ -9,7 +9,7 @@ from pathlib import Path
 import context_engine as contextx
 
 ROOT=Path(__file__).resolve().parents[1];DATA=storage.DATA;INDEX=DATA/'index.jsonl';MEMORY=DATA/'memory.json';CONFIG=ROOT/'config'/'profiles.json'
-PROFILE_MODELS={'max':'kimik3-lite-v3-max','balanced':'kimik3-lite-v3','quality':'kimik3-lite-v3-quality'}
+PROFILE_MODELS={'max':'orcha-v3-max','balanced':'orcha-v3','quality':'orcha-v3-quality'}
 TEXT_EXTS={'.md','.txt','.json','.jsonl','.yaml','.yml','.toml','.ini','.py','.js','.ts','.tsx','.jsx','.java','.go','.rs','.c','.h','.cpp','.cs','.sql','.html','.css','.sh','.ps1','.bat','.cmd','.swift','.kt'};SKIP={'.git','node_modules','dist','build','.next','.venv','venv','__pycache__','.idea','.vscode','target','vendor'}
 _PROJECT=ContextVar('project_scope',default=None);_WORKING_LIMIT=ContextVar('working_limit',default=None);_INDEX_CACHE={};_INDEX_LOCK=threading.RLock();WORD=re.compile(r'[\wÀ-ỹ]+',re.UNICODE)
 @contextmanager
@@ -47,7 +47,7 @@ def _files(target,max_bytes=2*1024*1024):
         if p.name.startswith('.env') or p.stat().st_size>max_bytes or p.suffix.lower() not in TEXT_EXTS:return
         yield p;return
     patterns=[]
-    for ignore in (ROOT/'.kimik3ignore',p/'.kimik3ignore'):
+    for ignore in (ROOT/'.orchaignore',p/'.orchaignore'):
         if ignore.is_file():patterns.extend(x.strip() for x in ignore.read_text(encoding='utf-8').splitlines() if x.strip() and not x.startswith('#'))
     for base,dirs,files in os.walk(p):
         dirs[:]=[d for d in dirs if d not in SKIP]

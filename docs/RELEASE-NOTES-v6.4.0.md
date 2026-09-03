@@ -1,6 +1,6 @@
 # Orcha legacy release notes — v6.4.0
 
-> This release was originally published under the **KimiK3-Lite Studio** name. The current product brand is **Orcha**; historical tags/assets are not rewritten.
+> This release was originally published under the **Orcha Studio** name. The current product brand is **Orcha**; historical tags/assets are not rewritten.
 
 Model Manager + Auto Router + UI/UX Vision Lite.
 

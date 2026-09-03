@@ -3,13 +3,13 @@ from __future__ import annotations
 import os, time
 from pathlib import Path
 
-import kimik3_lite as core
+import orcha_core as core
 import mcp_gateway as mcp
 import skill_runtime as skills
 import storage
 
 ROOT=Path(__file__).resolve().parents[1]
-DATA=Path(os.environ.get('KIMIK3_DATA_DIR',str(ROOT/'data'))).expanduser()
+DATA=Path(os.environ.get('ORCHA_DATA_DIR',str(ROOT/'data'))).expanduser()
 LAST=DATA/'benchmark.json'
 
 

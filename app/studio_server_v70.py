@@ -8,7 +8,7 @@ from urllib.parse import parse_qs, urlsplit, unquote
 
 import data_sync
 import harness_runtime as harness
-import kimik3_lite as core
+import orcha_core as core
 import mobile_runtime
 import project_workspace as projects
 import project_planner as planner
@@ -29,8 +29,8 @@ class H70(v69.H69):
         text=text.replace('</body>','<script src="/api-client.js"></script><script src="/parallel-agents.js"></script><script src="/agent-team.js"></script><script src="/final-intelligence.js"></script><script src="/hermes.js"></script><script src="/harness.js"></script><script src="/project-workspace.js"></script><script src="/project-planner.js"></script><script src="/project-supervisor.js"></script><script src="/orcha-hybrid.js"></script><script src="/accessibility.js"></script><script src="/ui-foundation.js"></script><script src="/plugin-center.js"></script></body>')
         for old in ('Local Workspace · v6.4','Local Workspace · v6.8','Local Workspace · v7.0','Local Workspace · v7.2','Local Workspace · v7.3','Autonomous Work Platform · v7.4','Autonomous Work Platform · v7.5'):
             text=text.replace(old,'Autonomous Work Platform · v7.6')
-        text=text.replace('KimiK3 Lite · Local Workspace','Orcha · Autonomous Work Platform').replace('<b>KimiK3 Lite</b>','<b>Orcha</b>').replace('<div class="logo">K</div>','<div class="logo">O</div>')
-        text=text.replace('Anh muốn Kimi làm gì?','Anh muốn Orcha làm gì?').replace('Kimi cần quyền thực hiện','Orcha cần quyền thực hiện')
+        text=text.replace('Orcha · Local Workspace','Orcha · Autonomous Work Platform').replace('<b>Orcha</b>','<b>Orcha</b>').replace('<div class="logo">K</div>','<div class="logo">O</div>')
+        text=text.replace('Anh muốn Orcha làm gì?','Anh muốn Orcha làm gì?').replace('Orcha cần quyền thực hiện','Orcha cần quyền thực hiện')
         text=text.replace('Local only','Hybrid · local-first').replace('Local intelligence','Orcha intelligence')
         raw=text.encode('utf-8');self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Cache-Control','no-cache');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_GET(self):
