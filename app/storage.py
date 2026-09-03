@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import threading
+import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,12 +63,38 @@ def serialized(fn):
 
 
 def read_json(path, default):
+    """Read authoritative JSON. Corruption fails loudly by design."""
     try:
         return json.loads(Path(path).read_text(encoding='utf-8'))
     except FileNotFoundError:
         return default
     except (ValueError, OSError) as exc:
         raise RuntimeError(f'Cannot read persistent data: {path}') from exc
+
+
+@serialized
+def read_json_derived(path, default):
+    """Read rebuildable/derived JSON using backup-and-skip corruption policy.
+
+    Authoritative state must continue to use read_json(). If a derived record is
+    malformed, preserve the bytes under a .bak-* sibling and return the supplied
+    default so the application can boot and rebuild the projection/cache.
+    """
+    p = Path(path)
+    try:
+        return json.loads(p.read_text(encoding='utf-8'))
+    except FileNotFoundError:
+        return default
+    except (ValueError, OSError):
+        if not p.exists():
+            return default
+        stamp = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+        backup = p.with_name(p.name + f'.bak-{stamp}-{uuid.uuid4().hex[:8]}')
+        try:
+            os.replace(p, backup)
+        except OSError as exc:
+            raise RuntimeError(f'Cannot quarantine corrupt derived data: {p}') from exc
+        return default
 
 
 def atomic_text(path, text):
