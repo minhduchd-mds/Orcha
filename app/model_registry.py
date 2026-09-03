@@ -78,5 +78,5 @@ def execution_model(query,host,preferred='auto',tag=None):
         preferred=registered['id']
     selected=route(query,False,str(preferred or 'auto'),host=host)['selected'];return runtime_model(selected,False)['model']
 def self_test():
-    assert get('balanced');assert classify_task('đánh giá UI/UX screenshot')=='uiux';r=route('review code');assert r.get('selected');ui=get('uiux-vision-lite');x=runtime_model(ui,False);assert x.get('selected',{}).get('id')=='balanced';assert runtime_model(ui,True).get('selected',{}).get('id')=='uiux-vision-lite';print('PASS: model registry/router + composite text companion')
+    assert get('balanced');assert get('logic-08b');assert classify_task('đánh giá UI/UX screenshot')=='uiux';r=route('review code');assert r.get('selected');ui=get('uiux-vision-lite');x=runtime_model(ui,False);assert x.get('selected',{}).get('id')=='balanced';assert runtime_model(ui,True).get('selected',{}).get('id')=='uiux-vision-lite';print('PASS: model registry/router + composite text companion')
 if __name__=='__main__':self_test()

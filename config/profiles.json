@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "virtual_context_default": 1000000,
   "max": {
     "base": "gemma3:270m-it-qat",
@@ -37,7 +37,20 @@
     "native_context": 2048,
     "virtual_context": 1000000,
     "recommended_mode": "smart",
-    "modalities": ["text", "image"],
+    "modalities": [
+      "text",
+      "image"
+    ],
     "role": "uiux-vision"
+  },
+  "logic": {
+    "base": "qwen3.5:0.8b",
+    "ollama_name": "orcha-v3-logic-0.8b",
+    "published_model_size": "~1.0 GB",
+    "working_context": 6144,
+    "native_context": 262144,
+    "virtual_context": 1000000,
+    "recommended_mode": "smart",
+    "role": "reasoning-lite"
   }
 }

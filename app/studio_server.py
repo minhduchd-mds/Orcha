@@ -47,7 +47,7 @@ def start_ollama(host='http://127.0.0.1:11434'):
             with urllib.request.urlopen(host.rstrip('/')+'/api/tags',timeout=1):return True
         except Exception:pass
     return False
-def model_file(p):return {'max':ROOT/'Modelfile.v3.max','balanced':ROOT/'Modelfile.v3','quality':ROOT/'Modelfile.v3.quality'}.get(p,ROOT/'Modelfile.v3')
+def model_file(p):return {'max':ROOT/'Modelfile.v3.max','balanced':ROOT/'Modelfile.v3','quality':ROOT/'Modelfile.v3.quality','logic':ROOT/'Modelfile.logic-0.8b'}.get(p,ROOT/'Modelfile.v3')
 def setup_job(profile,host):
     jid='setup-'+uuid.uuid4().hex[:10];JOBS[jid]={'id':jid,'status':'queued','progress':0,'profile':profile}
     def worker():

@@ -8,7 +8,7 @@ MACOS="$APP/Contents/MacOS"
 DMGROOT="$OUT/dmg-root"
 rm -rf "$OUT"
 mkdir -p "$RES" "$MACOS" "$DMGROOT"
-for item in app mcp_servers studio config skills knowledge docs scripts tests Modelfile.v3 Modelfile.v3.max Modelfile.v3.quality README.md LICENSE LICENSE-NOTE.md CHANGELOG.md .orchaignore; do
+for item in app mcp_servers studio config skills knowledge docs scripts tests Modelfile.v3 Modelfile.v3.max Modelfile.v3.quality Modelfile.logic-0.8b README.md LICENSE LICENSE-NOTE.md CHANGELOG.md .orchaignore; do
   [ -e "$ROOT/$item" ] && cp -R "$ROOT/$item" "$RES/"
 done
 cat > "$MACOS/Orcha" <<'LAUNCH'
