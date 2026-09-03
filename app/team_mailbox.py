@@ -32,12 +32,12 @@ class DurableMailbox:
             raise TypeError("mailbox payload must be an object")
         path = self._path(team_id, target)
         path.parent.mkdir(parents=True, exist_ok=True)
-        pending = self.pending(team_id, target, limit=10000)
+        rows = self._rows(team_id, target)
         mid = str(message_id or ("msg-" + uuid.uuid4().hex[:16]))
-        existing = next((x for x in pending if x.get("id") == mid), None)
+        existing = next((x for x in rows if x.get("id") == mid), None)
         if existing:
             return existing
-        seq = max([int(x.get("seq", -1)) for x in pending] or [-1]) + 1
+        seq = max([int(x.get("seq", -1)) for x in rows] or [-1]) + 1
         row = {"id": mid, "seq": seq, "queued_at": time.time(), "payload": payload, "delivered_at": None}
         with path.open("a", encoding="utf-8", newline="\n") as stream:
             stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
@@ -53,7 +53,7 @@ class DurableMailbox:
         for line in path.read_text(encoding="utf-8").splitlines():
             try:
                 row = json.loads(line)
-                if isinstance(row, dict):
+                if isinstance(row, dict) and row.get("id") is not None:
                     rows.append(row)
             except ValueError:
                 continue
@@ -100,8 +100,11 @@ def self_test():
         assert [x["id"] for x in box.replay("t", "critic")] == ["m1", "m2"]
         box.ack("t", "critic", a["id"])
         assert [x["id"] for x in box.replay("t", "critic")] == ["m2"]
+        c = box.enqueue("t", "critic", {"text": "third"}, "m3")
+        assert c["seq"] == 2
+        assert box.enqueue("t", "critic", {"text": "do not reuse delivered id"}, "m1")["seq"] == 0
         assert b["seq"] == 1
-    print("PASS: durable mailbox fifo/dedupe/ack")
+    print("PASS: durable mailbox fifo/dedupe/ack/monotonic-seq")
 
 
 if __name__ == "__main__":
