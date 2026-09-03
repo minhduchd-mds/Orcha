@@ -15,7 +15,7 @@ Orcha là nền tảng điều phối AI chạy **local-first, hybrid-capable**.
 | Runtime | **Python 3.10+** |
 | Desktop Studio | HTML, CSS, JavaScript, local web runtime |
 | Local LLM | **Ollama** |
-| Model families | Qwen 3 / Qwen 3.5, Gemma 3, Moondream |
+| Model families | Qwen 3 / Qwen 3.5, Moondream |
 | Agent system | Planner, Supervisor, Single / Parallel / Agent Team |
 | Tool protocol | **MCP — Model Context Protocol** |
 | Knowledge | Local indexing, RAG, Virtual Context, project memory |
@@ -135,7 +135,7 @@ Orcha hiện có các profile built-in sau:
 
 | Model | Backbone | Dung lượng gần đúng | RAM tối thiểu | Chat | Tiếng Việt | Code | Reasoning | Tools | Vision/UIUX | Orcha Score |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **Orcha MAX** | `gemma3:270m-it-qat` | ~241 MB | 3 GB | 55 | 48 | 40 | 38 | 35 | — | **4.3/10** |
+| **Orcha MAX** | `qwen3.5:2b` | ~2.7 GB | 6 GB | 87 | 89 | 84 | 86 | 84 | — | **8.6/10** |
 | **Orcha Balanced** | `qwen3:0.6b-q4_K_M` | ~522 MB | 4 GB | 72 | 74 | 66 | 64 | 64 | — | **6.8/10** |
 | **Orcha Logic 0.8B** | `qwen3.5:0.8b` | ~1.0 GB | 4 GB | 78 | 80 | 72 | 76 | 74 | — | **7.6/10** |
 | **Orcha Quality** | `qwen3:1.7b` | ~1.4 GB | 6 GB | 82 | 82 | 78 | 78 | 74 | — | **7.9/10** |
@@ -151,11 +151,15 @@ Orcha hiện có các profile built-in sau:
 
 | Nhu cầu | Khuyến nghị |
 |---|---|
-| Máy rất yếu / phản hồi cực nhanh | **Orcha MAX** |
+| Mạnh nhất mặc định / code, reasoning, planning, tools | **Orcha MAX** |
 | Chat, RAG, tool cơ bản, RAM thấp | **Orcha Balanced** |
 | Logic/agent/tool tốt hơn nhưng vẫn nhẹ | **Orcha Logic 0.8B** |
 | Code, planning, reasoning sâu hơn | **Orcha Quality** |
 | Screenshot, layout, UI/UX review | **UI/UX Vision Lite** |
+
+### Orcha MAX
+
+`Orcha MAX` dùng **Qwen3.5 2B** làm backbone, ưu tiên khả năng tổng quát mạnh hơn cho code, reasoning, planning và tool-oriented work. Profile chạy working context 8K mặc định để cân bằng chất lượng và RAM, trong khi native context của backbone lớn hơn nhiều.
 
 ### Orcha Logic 0.8B
 
