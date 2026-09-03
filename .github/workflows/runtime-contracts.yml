@@ -1,0 +1,45 @@
+name: Runtime contracts
+
+on:
+  pull_request:
+    paths:
+      - 'app/session_handle.py'
+      - 'app/tool_stream.py'
+      - 'app/team_mailbox.py'
+      - 'app/agent_team.py'
+      - '.github/workflows/runtime-contracts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/session_handle.py'
+      - 'app/tool_stream.py'
+      - 'app/team_mailbox.py'
+      - 'app/agent_team.py'
+      - '.github/workflows/runtime-contracts.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile runtime contracts
+        run: python -m py_compile app/session_handle.py app/tool_stream.py app/team_mailbox.py app/agent_team.py
+      - name: Session handle lifecycle
+        env:
+          PYTHONPATH: app
+        run: python app/session_handle.py
+      - name: Streamed tool identity regression
+        env:
+          PYTHONPATH: app
+        run: python app/tool_stream.py
+      - name: Durable FIFO mailbox regression
+        env:
+          PYTHONPATH: app
+        run: python app/team_mailbox.py
