@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+WORKFLOWS = ROOT / '.github' / 'workflows'
 
 REPLACEMENTS = [
     ('KimiK3 Studio.command', 'Orcha.command'),
@@ -29,6 +29,14 @@ REPLACEMENTS = [
 SKIP_DIRS = {'.git', 'node_modules', 'dist', 'build', '.next', '.venv', 'venv', '__pycache__'}
 
 
+def is_workflow(path: Path) -> bool:
+    try:
+        path.relative_to(WORKFLOWS)
+        return True
+    except ValueError:
+        return False
+
+
 def replace_text(text: str) -> str:
     for old, new in REPLACEMENTS:
         text = text.replace(old, new)
@@ -44,6 +52,8 @@ def replace_text(text: str) -> str:
 
 def text_files():
     for path in ROOT.rglob('*'):
+        if is_workflow(path):
+            continue
         if not path.is_file() or any(part in SKIP_DIRS for part in path.relative_to(ROOT).parts):
             continue
         try:
@@ -69,12 +79,18 @@ def clean_verify():
             skip_next=True
             continue
         out.append(line)
+    main_line = "    subprocess.run([sys.executable,str(ROOT/'scripts/check_brand.py')],check=True,cwd=ROOT)"
+    for i,line in enumerate(out):
+        if line.startswith('def main():'):
+            if main_line not in out:
+                out.insert(i+1,main_line)
+            break
     path.write_text('\n'.join(out)+'\n', encoding='utf-8', newline='\n')
 
 
 def rename_paths():
     paths = sorted(
-        [p for p in ROOT.rglob('*') if p.exists() and '.git' not in p.parts],
+        [p for p in ROOT.rglob('*') if p.exists() and '.git' not in p.parts and not is_workflow(p)],
         key=lambda p: len(p.parts),
         reverse=True,
     )
@@ -95,7 +111,7 @@ def rename_paths():
 
 def write_brand_guard():
     path = ROOT / 'scripts' / 'check_brand.py'
-    path.write_text("""from pathlib import Path\n\nROOT=Path(__file__).resolve().parents[1]\nSKIP={'.git','node_modules','dist','build','.next','.venv','venv','__pycache__'}\nlegacy=''.join(('ki','mi'))\nerrors=[]\nfor path in ROOT.rglob('*'):\n    rel=path.relative_to(ROOT)\n    if any(part in SKIP for part in rel.parts):continue\n    if legacy in rel.as_posix().casefold():errors.append(f'legacy filename: {rel}')\n    if not path.is_file():continue\n    try:text=path.read_text(encoding='utf-8')\n    except (UnicodeDecodeError,OSError):continue\n    if legacy in text.casefold():errors.append(f'legacy text: {rel}')\nif errors:\n    raise SystemExit('\\n'.join(errors))\nprint('PASS: Orcha-only brand contract')\n""", encoding='utf-8', newline='\n')
+    path.write_text("""from pathlib import Path\n\nROOT=Path(__file__).resolve().parents[1]\nWORKFLOWS=ROOT/'.github'/'workflows'\nSKIP={'.git','node_modules','dist','build','.next','.venv','venv','__pycache__'}\nlegacy=''.join(('ki','mi'))\nerrors=[]\nfor path in ROOT.rglob('*'):\n    rel=path.relative_to(ROOT)\n    if any(part in SKIP for part in rel.parts):continue\n    try:path.relative_to(WORKFLOWS);continue\n    except ValueError:pass\n    if legacy in rel.as_posix().casefold():errors.append(f'legacy filename: {rel}')\n    if not path.is_file():continue\n    try:text=path.read_text(encoding='utf-8')\n    except (UnicodeDecodeError,OSError):continue\n    if legacy in text.casefold():errors.append(f'legacy text: {rel}')\nif errors:\n    raise SystemExit('\\n'.join(errors))\nprint('PASS: Orcha-only brand contract')\n""", encoding='utf-8', newline='\n')
 
 
 def main():
