@@ -45,6 +45,9 @@ def main():
     _verify_ui_contract()
     logic=(ROOT/'Modelfile.logic-0.8b').read_text(encoding='utf-8');assert 'FROM qwen3.5:0.8b' in logic and 'Orcha Logic 0.8B' in logic
     registry=json.loads((ROOT/'config/models.json').read_text(encoding='utf-8'));assert any(x.get('id')=='logic-08b' for x in registry.get('models',[]))
+    max_model=next(x for x in registry.get('models',[]) if x.get('id')=='max');assert max_model.get('base_tag')=='qwen3.5:2b' and max_model.get('ollama_tag')=='orcha-v3-max' and int(max_model.get('native_context',0))>=262144
+    max_profile=json.loads((ROOT/'config/profiles.json').read_text(encoding='utf-8')).get('max',{});assert max_profile.get('base')=='qwen3.5:2b' and int(max_profile.get('working_context',0))>=8192
+    max_recipe=(ROOT/'Modelfile.v3.max').read_text(encoding='utf-8');assert 'FROM qwen3.5:2b' in max_recipe and 'Orcha MAX' in max_recipe
     if args.fast:return
     with tempfile.TemporaryDirectory(prefix='orcha-verify-') as directory:
         os.environ['ORCHA_DATA_DIR']=directory

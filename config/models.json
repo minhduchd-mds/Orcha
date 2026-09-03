@@ -1,29 +1,35 @@
 {
-  "version": 1,
+  "version": 2,
   "models": [
     {
       "id": "max",
       "name": "Orcha MAX",
-      "ollama_tag": "gemma3:270m-it-qat",
-      "size_mb": 241,
-      "min_ram_gb": 3,
-      "native_context": 32768,
+      "ollama_tag": "orcha-v3-max",
+      "size_mb": 2700,
+      "min_ram_gb": 6,
+      "native_context": 262144,
       "modalities": [
         "text"
       ],
       "capabilities": {
-        "chat": 55,
-        "vietnamese": 48,
-        "code": 40,
-        "reasoning": 38,
-        "tools": 35,
+        "chat": 87,
+        "vietnamese": 89,
+        "code": 84,
+        "reasoning": 86,
+        "tools": 84,
         "vision": 0
       },
       "roles": [
-        "fast",
-        "fallback"
+        "max",
+        "deep",
+        "code",
+        "reasoning",
+        "planning",
+        "tools"
       ],
-      "builtin": true
+      "builtin": true,
+      "base_tag": "qwen3.5:2b",
+      "description": "Highest-capability built-in general-purpose Orcha profile. Qwen3.5 2B backbone with Orcha system behavior, optimized for code, reasoning, planning and tool-oriented work."
     },
     {
       "id": "balanced",
