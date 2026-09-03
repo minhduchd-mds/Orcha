@@ -3,7 +3,7 @@
   "virtual_context_default": 1000000,
   "max": {
     "base": "gemma3:270m-it-qat",
-    "ollama_name": "kimik3-lite-v3-max",
+    "ollama_name": "orcha-v3-max",
     "published_model_size": "~241 MB",
     "working_context": 2048,
     "native_context": 32768,
@@ -12,7 +12,7 @@
   },
   "balanced": {
     "base": "qwen3:0.6b-q4_K_M",
-    "ollama_name": "kimik3-lite-v3",
+    "ollama_name": "orcha-v3",
     "published_model_size": "~522 MB",
     "working_context": 4096,
     "native_context": 40960,
@@ -21,7 +21,7 @@
   },
   "quality": {
     "base": "qwen3:1.7b",
-    "ollama_name": "kimik3-lite-v3-quality",
+    "ollama_name": "orcha-v3-quality",
     "published_model_size": "~1.4 GB",
     "working_context": 6144,
     "native_context": 40960,

@@ -7,10 +7,10 @@ from urllib.parse import urlsplit
 
 import studio_server_v64 as v64
 import model_registry as registry
-import kimik3_lite as core
+import orcha_core as core
 import uiux_design_agent as design
 
-REPORTS=Path(os.environ.get('KIMIK3_DATA_DIR',str(core.DATA))).expanduser()/'design-reports'
+REPORTS=Path(os.environ.get('ORCHA_DATA_DIR',str(core.DATA))).expanduser()/'design-reports'
 
 def _raw_image(value):
     s=str(value or '')
@@ -86,5 +86,5 @@ class H65(v64.H64):
         return super().do_POST()
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=v64.legacy.profiles().get(a.profile) or v64.legacy.profiles()['balanced'];v64.legacy.workflows.ensure();v64.legacy.start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H65);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];srv.model_mode='auto';print(f'KimiK3-Lite v6.5 Studio http://{a.host}:{a.port}');srv.serve_forever()
+    ap=argparse.ArgumentParser();ap.add_argument('--host',default='127.0.0.1');ap.add_argument('--port',type=int,default=11435);ap.add_argument('--ollama',default='http://127.0.0.1:11434');ap.add_argument('--profile',default='balanced');ap.add_argument('--model');a=ap.parse_args();cfg=v64.legacy.profiles().get(a.profile) or v64.legacy.profiles()['balanced'];v64.legacy.workflows.ensure();v64.legacy.start_ollama(a.ollama);srv=ThreadingHTTPServer((a.host,a.port),H65);srv.ollama=a.ollama;srv.profile=a.profile;srv.model=a.model or cfg['ollama_name'];srv.model_mode='auto';print(f'Orcha v6.5 Studio http://{a.host}:{a.port}');srv.serve_forever()
 if __name__=='__main__':main()

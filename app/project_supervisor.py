@@ -87,7 +87,7 @@ def _execute_scoped(pid,tid=None,explicit=False,profile='balanced',model=None,ho
     task,early=_claim(pid,tid,explicit)
     if early:return {**early,'supervisor':status(pid)}
     sid='project-'+pid+'-'+task['id'];meta=task.get('planner') or {}
-    core=__import__('kimik3_lite');budget_token=core._WORKING_LIMIT.set(meta.get('working_context'))
+    core=__import__('orcha_core');budget_token=core._WORKING_LIMIT.set(meta.get('working_context'))
     try:
         import model_registry
         try:route=model_registry.route(task['title']+' '+task['description'],False,str(meta.get('model_id') or 'auto'),host=host)
@@ -99,7 +99,7 @@ def _execute_scoped(pid,tid=None,explicit=False,profile='balanced',model=None,ho
             import agent_team,parallel_agent
             raw=(agent_team.run if strategy=='team' else parallel_agent.run)(query,profile,model,host,sid)
             runtime=raw.get('team') or raw
-            result={'answer':raw.get('answer'),'sources':__import__('kimik3_lite').retrieve(query,6),
+            result={'answer':raw.get('answer'),'sources':__import__('orcha_core').retrieve(query,6),
                     'agent':{'status':runtime.get('status'),'observations':[]},'strategy':strategy}
         else:
             result=agent_runtime.run(query,profile,model,host,'auto',sid,read_only=not task.get('write_intent'),skill_id=meta.get('skill_id'),on_start=lambda run:projects.update_task(pid,task['id'],{'agent_run_id':run['id']},verified=True))
@@ -111,7 +111,7 @@ def _execute_scoped(pid,tid=None,explicit=False,profile='balanced',model=None,ho
     return {'task':task,'outcome':outcome,'supervisor':status(pid)}
 
 def execute(pid,*args,**kwargs):
-    import kimik3_lite as core
+    import orcha_core as core
     with core.project_scope(pid):return _execute_scoped(pid,*args,**kwargs)
 
 
@@ -130,7 +130,7 @@ def continue_task(pid,tid,scope='once',approved=True):
         agent_runtime.grant_action(rid,run['session_id'],scope)
         s=_read(pid);s['active_task']=tid;_write(pid,s)
     try:
-        with __import__('kimik3_lite').project_scope(pid):result=agent_runtime.continue_run(rid,run['session_id'])
+        with __import__('orcha_core').project_scope(pid):result=agent_runtime.continue_run(rid,run['session_id'])
     except Exception as exc:result={'agent':{'status':'failed','error':str(exc)}}
     return _record(pid,task,result)
 

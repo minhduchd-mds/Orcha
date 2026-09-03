@@ -82,20 +82,20 @@ def list_servers(probe=False):
     return out
 
 def _indexed_paths():
-    import kimik3_lite as core
+    import orcha_core as core
     return {Path(row['path']).expanduser().resolve() for row in core.load_index() if row.get('path')}
 def _allowed_read(path):
-    import kimik3_lite as core
+    import orcha_core as core
     p=path.expanduser().resolve()
     if not p.is_file() or p.stat().st_size>2*1024*1024:return False
     if p.name.startswith('.env') or '.git' in p.parts or p.is_relative_to(DATA):return False
     if core._PROJECT.get() is not None:return p in _indexed_paths()
     return p.is_relative_to(ROOT) or p in _indexed_paths()
 def _search_index(query,top_k=6):
-    import kimik3_lite as core
+    import orcha_core as core
     return core.retrieve(query,max(1,min(int(top_k),12)))
 def _context_stats(session_id='default'):
-    import kimik3_lite as core
+    import orcha_core as core
     return core.context_status(session_id=session_id)
 def _normalize_external(value):
     if not isinstance(value,dict):return value

@@ -5,12 +5,12 @@ This contract is mandatory for product-facing frontend work.
 ## Source priority
 
 1. User brief / explicit product requirement.
-2. Existing Orcha visual baseline inherited from the original Kimi-era `studio/styles.css`.
+2. Existing Orcha visual baseline inherited from the original Orcha-era `studio/styles.css`.
 3. Existing component and interaction patterns.
 4. Anthropic Claude Code `frontend-design` quality principles.
 5. New experimentation only when it does not conflict with 1–4.
 
-There is no separate official `Kimi Style Rule` file in this repository. The Kimi-derived baseline is the actual visual language already encoded in `studio/styles.css`; Orcha preserves that language instead of inventing a replacement theme.
+There is no separate official `Orcha Style Rule` file in this repository. The Orcha-derived baseline is the actual visual language already encoded in `studio/styles.css`; Orcha preserves that language instead of inventing a replacement theme.
 
 Claude frontend-design is a quality reference, not a theme. It may improve hierarchy, typography treatment, structure, copy, restraint, responsive behavior, keyboard focus and self-critique, but it must not silently replace Orcha's palette, radius, density, layout or icon language.
 
@@ -70,7 +70,7 @@ The runtime registry lives in `studio/ui-foundation.js`.
 
 Product-facing name is **Orcha**.
 
-`Kimi`, `KimiK3`, and `KimiK3-Lite` may only remain in explicitly historical or compatibility contexts such as legacy model IDs, migration environment variables, old release notes or compatibility launchers. They must not appear in:
+`Orcha`, `Orcha`, and `Orcha` may only remain in explicitly historical or compatibility contexts such as legacy model IDs, migration environment variables, old release notes or compatibility launchers. They must not appear in:
 
 - welcome/chat text;
 - assistant metadata;

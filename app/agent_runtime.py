@@ -7,7 +7,7 @@ from typing import Any
 
 import action_log as audit
 import harness_runtime as harness
-import kimik3_lite as core
+import orcha_core as core
 import mcp_gateway as mcp
 import skill_runtime as skills
 

@@ -1,14 +1,14 @@
 # Orcha Changelog
 
-> Product name from v7.4 onward: **Orcha**. Older tags/releases may still contain the historical **KimiK3-Lite** name; those artifacts are not rewritten.
+> Product name from v7.4 onward: **Orcha**. Older tags/releases may still contain the historical **Orcha** name; those artifacts are not rewritten.
 
 ## v7.7.0 — UI Contract + Outline Icon System
 
-- Lock the product visual baseline to the established warm-dark Kimi-era style already encoded in `studio/styles.css`; Orcha keeps that palette, density, radius and workspace language instead of inventing a new theme.
+- Lock the product visual baseline to the established warm-dark Orcha-era style already encoded in `studio/styles.css`; Orcha keeps that palette, density, radius and workspace language instead of inventing a new theme.
 - Make Anthropic Claude Code `frontend-design` a **quality reference only**: hierarchy, typography discipline, structure, copy, restraint, responsive behavior, focus and self-critique may improve the product but may not override the Orcha visual baseline.
 - Add `docs/ORCHA-UI-CONTRACT.md` with mandatory source priority, visual tokens, interaction rules, brand rules and merge gates.
 - Upgrade `orcha-frontend-design` to v1.1 with mandatory Orcha-baseline-first rules and explicit Claude-subordinate behavior.
-- Change product-facing static chat/UI source from the retired Kimi name to **Orcha**: title, brand, welcome text, Inspector label and permission dialog.
+- Change product-facing static chat/UI source from the retired Orcha name to **Orcha**: title, brand, welcome text, Inspector label and permission dialog.
 - Add runtime brand normalization so dynamically inserted assistant/UI text also surfaces the Orcha name; historical/compatibility identifiers remain allowed only outside product-facing UI.
 - Standardize product icons as outline SVG: 24×24 viewBox, `fill=none`, `stroke=currentColor`, 1.8 stroke, round caps/joins.
 - Replace legacy navigation/workflow/modal glyph controls with declarative outline-icon markers and a shared runtime icon registry.
@@ -56,7 +56,7 @@
 - Add `mobile_runtime.py` model/runtime selector using OS, RAM, storage, battery, thermal, network, installed-model state and privacy mode.
 - Add Mobile Runtime UI and API; selector can return `on_device`, `peer_or_remote` or `defer`.
 - `privacy=strict` never silently routes data to a remote provider when local execution is unavailable.
-- Add `ORCHA_DATA_DIR`; `KIMIK3_DATA_DIR` remains migration fallback only.
+- Add `ORCHA_DATA_DIR`; `ORCHA_DATA_DIR` remains migration fallback only.
 - macOS app becomes `Orcha.app`; release assets become `Orcha-vX.Y.Z-*`.
 
 ## v7.3.0 — Project Executor & Supervisor
@@ -141,4 +141,4 @@
 
 - Add Windows/macOS thin desktop launchers and packaging.
 - Edge/Chrome App Mode, first-run model setup, local RAG indexing and workflow UI.
-- Historical data path used `KIMIK3_DATA_DIR`; Orcha v7.4 prefers `ORCHA_DATA_DIR` while preserving migration compatibility.
+- Historical data path used `ORCHA_DATA_DIR`; Orcha v7.4 prefers `ORCHA_DATA_DIR` while preserving migration compatibility.

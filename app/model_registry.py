@@ -69,7 +69,7 @@ def route(text,has_image=False,preferred='auto',host=None):
         c=m.get('capabilities') or {};s=int(c.get(key,c.get('chat',0)));return s-60 if task=='uiux' and has_image and 'image' not in m.get('modalities',[]) else s+(3 if 'default' in m.get('roles',[]) else 0)
     chosen=max(candidates,key=score) if candidates else None;return {'task':task,'selected':chosen,'reason':'capability+ram','system_ram_gb':ram,'candidates':[{'id':m.get('id'),'score':score(m)} for m in candidates]}
 def inference_limits(model,profile='balanced'):
-    import kimik3_lite as core
+    import orcha_core as core
     cfg=core.profile_config(profile);registered=next((m for m in list_models() if canonical_tag(m.get('ollama_tag',''))==canonical_tag(model)),{});native=int(registered.get('native_context') or cfg.get('native_context',4096));working=min(native,int(cfg.get('working_context',4096)),max(512,int(core._WORKING_LIMIT.get() or native)));return {**cfg,'working_context':working,'native_context':native}
 def execution_model(query,host,preferred='auto',tag=None):
     if tag:

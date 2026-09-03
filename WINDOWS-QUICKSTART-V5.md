@@ -24,7 +24,7 @@ Mở **Mobile Runtime** để mô phỏng/cấu hình capability iOS/Android và
 
 ## Dữ liệu
 
-Biến ưu tiên: `ORCHA_DATA_DIR`. Trong giai đoạn migration, Orcha vẫn đọc `KIMIK3_DATA_DIR` nếu đã có dữ liệu bản cũ.
+Biến ưu tiên: `ORCHA_DATA_DIR`. Trong giai đoạn migration, Orcha vẫn đọc `ORCHA_DATA_DIR` nếu đã có dữ liệu bản cũ.
 
 ## Lần sau
 

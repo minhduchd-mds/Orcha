@@ -3,7 +3,7 @@ from __future__ import annotations
 import storage,json,time,uuid,copy
 from contextvars import copy_context
 from concurrent.futures import ThreadPoolExecutor,as_completed
-import kimik3_lite as core
+import orcha_core as core
 import parallel_agent as parallel
 from team_mailbox import DurableMailbox
 

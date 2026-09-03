@@ -4,7 +4,7 @@
     "project": "NousResearch/hermes-agent",
     "release": "v2026.8.31",
     "license": "MIT",
-    "note": "Architecture concepts only; KimiK3-Lite implementation is independently written for the local low-RAM runtime."
+    "note": "Architecture concepts only; Orcha implementation is independently written for the local low-RAM runtime."
   },
   "routing": {
     "default": "auto",

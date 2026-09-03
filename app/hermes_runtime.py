@@ -13,7 +13,7 @@ import skill_runtime as skills
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / 'config' / 'hermes.json'
-DATA = Path(os.environ.get('KIMIK3_DATA_DIR', str(ROOT / 'data'))).expanduser()
+DATA = Path(os.environ.get('ORCHA_DATA_DIR', str(ROOT / 'data'))).expanduser()
 STORE = DATA / 'hermes'
 SESSIONS = STORE / 'sessions'
 PEERS = STORE / 'peer_messages.jsonl'
