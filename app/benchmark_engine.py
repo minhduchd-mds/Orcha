@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, os, time
+import os, time
 from pathlib import Path
 
 import kimik3_lite as core
 import mcp_gateway as mcp
 import skill_runtime as skills
+import storage
 
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.environ.get('KIMIK3_DATA_DIR',str(ROOT/'data'))).expanduser()
@@ -25,11 +26,11 @@ def run(profile:str='balanced', session_id:str='default')->dict:
     context=min(100,45+round((ctx.get('virtual',{}).get('limit_tokens',0)/1_000_000)*35)+round((ctx.get('native',{}).get('limit_tokens',0)/40960)*20))
     score=round(retrieval*.2+skill_score*.18+tool_score*.18+safety*.18+memory*.1+context*.16)
     result={'score':score,'label':'KII benchmark local','profile':profile,'ts':time.time(),'elapsed_ms':round((time.time()-started)*1000),'metrics':{'retrieval_ready':retrieval,'skills':skill_score,'tooling':tool_score,'safety':safety,'memory':memory,'context':context},'inventory':{'index_chunks':len(idx),'memory_items':len(mem),'skills':len(sk),'tools':len(tools),'servers':len(servers)},'note':'Benchmark năng lực runtime cục bộ; không phải IQ và không thay thế benchmark học thuật của model.'}
-    DATA.mkdir(parents=True,exist_ok=True); LAST.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8'); return result
+    DATA.mkdir(parents=True,exist_ok=True); storage.atomic_json(LAST,result); return result
 
 def last()->dict|None:
-    try:return json.loads(LAST.read_text(encoding='utf-8'))
-    except Exception:return None
+    # benchmark.json is a rebuildable projection: quarantine corruption and boot cleanly.
+    return storage.read_json_derived(LAST,None)
 
 def self_test():
     r=run(); assert 0<=r['score']<=100 and 'safety' in r['metrics']; print('PASS: benchmark engine')
