@@ -9,6 +9,9 @@ on:
       - 'app/agent_team.py'
       - 'app/storage.py'
       - 'app/benchmark_engine.py'
+      - 'app/network_transport.py'
+      - 'app/model_registry.py'
+      - 'app/model_benchmark.py'
       - '.github/workflows/runtime-contracts.yml'
   push:
     branches: [main]
@@ -19,6 +22,9 @@ on:
       - 'app/agent_team.py'
       - 'app/storage.py'
       - 'app/benchmark_engine.py'
+      - 'app/network_transport.py'
+      - 'app/model_registry.py'
+      - 'app/model_benchmark.py'
       - '.github/workflows/runtime-contracts.yml'
 
 permissions:
@@ -34,7 +40,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile runtime contracts
-        run: python -m py_compile app/session_handle.py app/tool_stream.py app/team_mailbox.py app/agent_team.py app/storage.py app/benchmark_engine.py
+        run: python -m py_compile app/session_handle.py app/tool_stream.py app/team_mailbox.py app/agent_team.py app/storage.py app/benchmark_engine.py app/network_transport.py app/model_registry.py app/model_benchmark.py
       - name: Session handle lifecycle
         env:
           PYTHONPATH: app
@@ -47,6 +53,18 @@ jobs:
         env:
           PYTHONPATH: app
         run: python app/team_mailbox.py
+      - name: Network transport regression
+        env:
+          PYTHONPATH: app
+        run: python app/network_transport.py
+      - name: Model discovery normalization regression
+        env:
+          PYTHONPATH: app
+        run: python app/model_registry.py
+      - name: Model benchmark contract
+        env:
+          PYTHONPATH: app
+        run: python app/model_benchmark.py
       - name: Derived data backup-and-skip regression
         env:
           PYTHONPATH: app
