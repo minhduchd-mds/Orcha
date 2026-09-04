@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import storage
-import json,os,re,time,urllib.request
+import json,os,re,time
 from pathlib import Path
+import network_transport as network
 ROOT=Path(__file__).resolve().parents[1];REGISTRY=ROOT/'config'/'models.json';USER_REGISTRY=storage.DATA/'models.json';ID=re.compile(r'^[a-z0-9][a-z0-9._-]{1,63}$')
 def _load(path):
     try:return json.loads(path.read_text(encoding='utf-8'))
@@ -44,9 +45,15 @@ def classify_task(text,has_image=False):
     return 'chat'
 def canonical_tag(tag):
     tag=str(tag);return tag if ':' in tag.rsplit('/',1)[-1] else tag+':latest'
-def installed_tags(host):
-    with urllib.request.urlopen(host.rstrip('/')+'/api/tags',timeout=5) as response:data=json.load(response)
-    return {canonical_tag(x.get('name') or x.get('model') or '') for x in data.get('models',[])}
+def _normalize_discovered(item):
+    tag=canonical_tag(item.get('name') or item.get('model') or '')
+    registered=next((m for m in list_models() if canonical_tag(m.get('ollama_tag',''))==tag),None)
+    details=item.get('details') or {}
+    return {'id':registered.get('id') if registered else None,'provider':'ollama','model':tag,'name':registered.get('name') if registered else tag,'native_context':int((registered or {}).get('native_context') or 0),'max_output_tokens':int((registered or {}).get('max_output_tokens') or 0),'modalities':list((registered or {}).get('modalities') or ['text']),'capabilities':dict((registered or {}).get('capabilities') or {}),'roles':list((registered or {}).get('roles') or []),'family':details.get('family'),'parameter_size':details.get('parameter_size'),'quantization_level':details.get('quantization_level'),'size_bytes':int(item.get('size') or 0),'registered':bool(registered)}
+def discover_models(host):
+    data=network.get_json(host.rstrip('/')+'/api/tags',timeout=5)
+    return [_normalize_discovered(x) for x in data.get('models',[]) if x.get('name') or x.get('model')]
+def installed_tags(host):return {x['model'] for x in discover_models(host)}
 def runtime_model(selected,has_image=False):
     selected=dict(selected or {})
     if selected.get('composite') and not has_image:
@@ -78,5 +85,5 @@ def execution_model(query,host,preferred='auto',tag=None):
         preferred=registered['id']
     selected=route(query,False,str(preferred or 'auto'),host=host)['selected'];return runtime_model(selected,False)['model']
 def self_test():
-    assert get('balanced');assert get('logic-08b');assert classify_task('đánh giá UI/UX screenshot')=='uiux';r=route('review code');assert r.get('selected');ui=get('uiux-vision-lite');x=runtime_model(ui,False);assert x.get('selected',{}).get('id')=='balanced';assert runtime_model(ui,True).get('selected',{}).get('id')=='uiux-vision-lite';print('PASS: model registry/router + composite text companion')
+    assert get('balanced');assert get('logic-08b');assert classify_task('đánh giá UI/UX screenshot')=='uiux';r=route('review code');assert r.get('selected');ui=get('uiux-vision-lite');x=runtime_model(ui,False);assert x.get('selected',{}).get('id')=='balanced';assert runtime_model(ui,True).get('selected',{}).get('id')=='uiux-vision-lite';sample=_normalize_discovered({'name':'orcha-v3:latest','size':12,'details':{'family':'qwen','parameter_size':'4B','quantization_level':'Q4_K_M'}});assert sample['provider']=='ollama' and sample['model']=='orcha-v3:latest';print('PASS: model registry/router + normalized discovery')
 if __name__=='__main__':self_test()
