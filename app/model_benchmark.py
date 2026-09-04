@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json,time,urllib.request
+import time
 from pathlib import Path
 import model_registry as registry
+import network_transport as network
 
 DATA=Path(__file__).resolve().parents[1]/'data'/'model-benchmarks.json'
 
@@ -20,9 +21,7 @@ def compare(ids:list[str])->dict:
 
 def _chat(tag,prompt,host,timeout=90):
     body={'model':tag,'messages':[{'role':'user','content':prompt}],'stream':False,'think':False,'options':{'temperature':0,'num_ctx':2048}}
-    req=urllib.request.Request(host.rstrip('/')+'/api/chat',data=json.dumps(body).encode(),headers={'Content-Type':'application/json'})
-    t=time.perf_counter()
-    with urllib.request.urlopen(req,timeout=timeout) as r:d=json.load(r)
+    t=time.perf_counter();d=network.post_json(host.rstrip('/')+'/api/chat',body,timeout=timeout)
     return str(d.get('message',{}).get('content','')).strip(),time.perf_counter()-t
 
 def benchmark(mid:str,host='http://127.0.0.1:11434')->dict:
@@ -38,12 +37,15 @@ def benchmark(mid:str,host='http://127.0.0.1:11434')->dict:
         else:scores[key]=100 if 'project.search' in text and 'query' in text else 45
     result={'id':mid,'model':tag,'timestamp':int(time.time()),'latency_s':round(sum(lat)/len(lat),2),'scores':scores,'runtime_score':round(sum(scores.values())/len(scores)),'declared_score':declared_score(m)}
     try:
+        import json
         DATA.parent.mkdir(parents=True,exist_ok=True);old=json.loads(DATA.read_text(encoding='utf-8')) if DATA.exists() else {};old[mid]=result;DATA.write_text(json.dumps(old,ensure_ascii=False,indent=2),encoding='utf-8')
     except Exception:pass
     return result
 
 def last(mid:str|None=None):
-    try:d=json.loads(DATA.read_text(encoding='utf-8'))
+    try:
+        import json
+        d=json.loads(DATA.read_text(encoding='utf-8'))
     except Exception:d={}
     return d.get(mid) if mid else d
 
