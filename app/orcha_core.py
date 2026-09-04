@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import storage
-import json,hashlib,threading,os,re,unicodedata,urllib.request,runtime_budget,fnmatch
+import json,hashlib,threading,os,re,unicodedata,runtime_budget,fnmatch
 from contextlib import contextmanager
 from contextvars import ContextVar
 from collections import Counter
 from pathlib import Path
 import context_engine as contextx
+import network_transport as network
 
 ROOT=Path(__file__).resolve().parents[1];DATA=storage.DATA;INDEX=DATA/'index.jsonl';MEMORY=DATA/'memory.json';CONFIG=ROOT/'config'/'profiles.json'
 PROFILE_MODELS={'max':'orcha-v3-max','balanced':'orcha-v3','quality':'orcha-v3-quality'}
@@ -101,8 +102,8 @@ def retrieve(query,top_k=6):
 def ollama_chat(model,messages,host='http://127.0.0.1:11434',timeout=300,temp=.3,num_ctx=None,num_predict=768):
     options={'temperature':temp,'num_predict':max(64,min(int(num_predict),2048,int(num_ctx or 4096)//3))};budget=max(128,int(num_ctx or 4096)-options['num_predict']-128);messages=contextx.bound_messages(messages,budget)
     if num_ctx:options['num_ctx']=int(num_ctx)
-    body=json.dumps({'model':model,'messages':messages,'stream':False,'think':False,'options':options},ensure_ascii=False).encode();req=urllib.request.Request(host.rstrip('/')+'/api/chat',data=body,headers={'Content-Type':'application/json'})
-    with runtime_budget.MODEL_SLOTS,urllib.request.urlopen(req,timeout=timeout) as r:data=json.load(r)
+    body={'model':model,'messages':messages,'stream':False,'think':False,'options':options}
+    with runtime_budget.MODEL_SLOTS:data=network.post_json(host.rstrip('/')+'/api/chat',body,timeout=timeout)
     return str(data.get('message',{}).get('content','')).strip()
 def mode_for(q,mode='auto'):
     if mode!='auto':return mode
