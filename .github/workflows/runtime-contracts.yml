@@ -12,6 +12,7 @@ on:
       - 'app/network_transport.py'
       - 'app/model_registry.py'
       - 'app/model_benchmark.py'
+      - 'app/orcha_core.py'
       - '.github/workflows/runtime-contracts.yml'
   push:
     branches: [main]
@@ -25,6 +26,7 @@ on:
       - 'app/network_transport.py'
       - 'app/model_registry.py'
       - 'app/model_benchmark.py'
+      - 'app/orcha_core.py'
       - '.github/workflows/runtime-contracts.yml'
 
 permissions:
@@ -40,7 +42,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile runtime contracts
-        run: python -m py_compile app/session_handle.py app/tool_stream.py app/team_mailbox.py app/agent_team.py app/storage.py app/benchmark_engine.py app/network_transport.py app/model_registry.py app/model_benchmark.py
+        run: python -m py_compile app/session_handle.py app/tool_stream.py app/team_mailbox.py app/agent_team.py app/storage.py app/benchmark_engine.py app/network_transport.py app/model_registry.py app/model_benchmark.py app/orcha_core.py
       - name: Session handle lifecycle
         env:
           PYTHONPATH: app
@@ -65,6 +67,10 @@ jobs:
         env:
           PYTHONPATH: app
         run: python app/model_benchmark.py
+      - name: Core inference contract
+        env:
+          PYTHONPATH: app
+        run: python app/orcha_core.py --self-test
       - name: Derived data backup-and-skip regression
         env:
           PYTHONPATH: app
